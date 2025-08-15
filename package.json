@@ -9,7 +9,7 @@
         "admin-lte": "^3.2.0",
         "bootstrap": "4.6.2",
         "jquery": "^3.6.0",
-        "popper.js": "^1.16.1",
+        "@popperjs/core": "^2.11.6",
         "overlayscrollbars": "^2.0.0",
         "axios": "^1.7.4",
         "sass": "^1.69.0",
@@ -20,6 +20,11 @@
     },
     "devDependencies": {
         "concurrently": "^9.0.1"
+    },
+    "overrides": {
+        "bootstrap-switch": {
+            "bootstrap": "4.6.2"
+        }
     },
     "optionalDependencies": {
         "@rollup/rollup-linux-x64-gnu": "4.9.5",

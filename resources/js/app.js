@@ -2,9 +2,9 @@
 import $ from 'jquery';
 window.$ = window.jQuery = $;
 
-// Import Popper.js
-import Popper from 'popper.js';
-window.Popper = Popper;
+// Import Popper.js (v2)
+import { createPopper } from '@popperjs/core';
+window.Popper = { createPopper };
 
 // Import Bootstrap 4.6
 import 'bootstrap';
