@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Billing\Services;
 
 use App\Domain\Billing\Contracts\PaymentGatewayInterface;
+use App\Domain\Billing\Events\PaymentSucceeded;
 use App\Domain\Billing\Exceptions\PaymentGatewayException;
 use App\Enums\PaymentStatus;
 use App\Models\Order;
@@ -132,6 +133,12 @@ class PaymentService
         }
 
         $payment->update($updateData);
+
+        // Dispatch events based on status
+        if ($status === PaymentStatus::SUCCESS) {
+            event(new PaymentSucceeded($payment));
+        }
+        // TODO: Add PaymentFailed event dispatch when status is FAILED
 
         Log::info('Payment status updated', [
             'payment_id' => $payment->id,

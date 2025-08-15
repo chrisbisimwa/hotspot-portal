@@ -248,6 +248,63 @@ php artisan test tests/Unit/Domain/Billing/
 
 ## Configuration
 
+### Étape 5 – Provisioning & Events
+
+The application implements a complete hotspot provisioning system with event-driven architecture:
+
+#### Provisioning Flow
+```
+Payment SUCCESS → PaymentSucceeded Event → OnPaymentSucceededProvisionOrder Listener
+                                                            ↓
+Order Status: processing → Create HotspotUsers → HotspotUserProvisioned Events
+                                                            ↓
+                    Credentials sent via NotificationService → OrderCompleted Event
+```
+
+#### Components
+
+**Core Services:**
+- `HotspotProvisioningService`: Main provisioning logic for creating hotspot users from orders
+- `NotificationService`: Abstract notification service supporting SMS, Email, and WhatsApp channels
+
+**Events & Listeners:**
+- `PaymentSucceeded` → `OnPaymentSucceededProvisionOrder`: Triggers provisioning when payment succeeds
+- `HotspotUserProvisioned` → `OnHotspotUserProvisionedSendCredentials`: Sends user credentials
+- `OrderCompleted` → `OnOrderCompletedSendSummary`: Sends order completion summary (placeholder)
+
+**Key Features:**
+- Configurable username patterns (default: `HS{timestamp}{index}`)
+- Secure password generation (10 chars alphanum by default)
+- Partial failure handling with metadata
+- Mikrotik API integration with fake mode support
+- Multiple notification channels (SMS, Email)
+
+#### Configuration
+```bash
+# Provisioning settings
+HOTSPOT_USERNAME_PREFIX=HS
+HOTSPOT_PASSWORD_LENGTH=10
+
+# Notification settings  
+NOTIFY_DEFAULT_CHANNEL=sms
+```
+
+#### Future Commands (TODO)
+```bash
+# Reprovision a specific order
+php artisan hotspot:provision-order {orderId}
+```
+
+#### Testing
+```bash
+# Run provisioning-related tests
+php artisan test --filter=Provisioning
+
+# Test the complete flow
+php artisan migrate:fresh --seed
+php artisan test tests/Feature/ProvisioningFlowTest.php
+```
+
 ### MikroTik Setup
 Configure your MikroTik router settings in `.env`:
 ```env
