@@ -112,7 +112,7 @@
                         <tbody>
                             <tr>
                                 <td>
-                                    <img src="{{ asset('images/user1-128x128.jpg') }}" alt="User" class="img-circle img-size-32 mr-2">
+                                    <img src="{{ file_exists(public_path('images/user1-128x128.jpg')) ? asset('images/user1-128x128.jpg') : asset('images/default-avatar.png') }}" alt="User" class="img-circle img-size-32 mr-2">
                                     user001
                                 </td>
                                 <td>
