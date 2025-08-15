@@ -1,8 +1,40 @@
 <?php
 
+use App\Jobs\DispatchPendingNotificationsJob;
+use App\Jobs\PruneOldLogsJob;
+use App\Jobs\ReconcilePaymentsJob;
+use App\Jobs\SyncActiveSessionsJob;
+use App\Jobs\SyncMikrotikUsersJob;
+use App\Jobs\UpdateExpiredHotspotUsersJob;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Schedule;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
+
+// Schedule jobs using configuration
+Schedule::job(new SyncMikrotikUsersJob())
+    ->cron(config('scheduler.sync_users_cron'))
+    ->withoutOverlapping();
+
+Schedule::job(new SyncActiveSessionsJob())
+    ->cron(config('scheduler.sync_sessions_cron'))
+    ->withoutOverlapping();
+
+Schedule::job(new UpdateExpiredHotspotUsersJob())
+    ->cron(config('scheduler.expire_users_cron'))
+    ->withoutOverlapping();
+
+Schedule::job(new ReconcilePaymentsJob())
+    ->cron(config('scheduler.reconcile_payments_cron'))
+    ->withoutOverlapping();
+
+Schedule::job(new DispatchPendingNotificationsJob())
+    ->cron(config('scheduler.dispatch_notifications_cron'))
+    ->withoutOverlapping();
+
+Schedule::job(new PruneOldLogsJob())
+    ->cron(config('scheduler.prune_logs_cron'))
+    ->withoutOverlapping();
