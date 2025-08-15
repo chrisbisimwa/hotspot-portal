@@ -5,4 +5,5 @@ return [
     App\Providers\VoltServiceProvider::class,
     App\Providers\DomainServiceProvider::class,
     App\Providers\RouteServiceProvider::class,
+    App\Providers\AuthServiceProvider::class,
 ];

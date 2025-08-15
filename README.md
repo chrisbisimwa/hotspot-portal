@@ -172,7 +172,48 @@ Run the seeder tests to ensure everything works correctly:
   - [x] config/billing.php (reconciliation batch size)
   - [x] Enhanced config/notifications.php (dispatch batch size)
 
-### 🔜 Étape 7: Admin Interface (Livewire)
+### ✅ Étape 7: API REST v1 (Completed)
+- [x] **API Infrastructure**
+  - [x] Versioned routes (api/v1) with clean URL structure
+  - [x] Consistent JSON response format with ApiResponse trait
+  - [x] Custom exception handler for API-specific error formatting
+  - [x] Role-based rate limiting (admin: 600/min, agent: 300/min, user: 120/min, auth: 30/min)
+- [x] **Authentication Endpoints**
+  - [x] POST /auth/login (email or phone + password)
+  - [x] POST /auth/logout (revoke current token)
+  - [x] GET /me (current user profile)
+  - [x] Sanctum token-based authentication with role-based abilities
+- [x] **Core API Endpoints**
+  - [x] GET /user-profiles (public, active profiles only)
+  - [x] POST /orders, GET /orders, GET /orders/{order}
+  - [x] GET /payments/{payment}, POST /payments/{order}/initiate
+  - [x] GET /hotspot-users, GET /hotspot-users/{user}, GET /hotspot-users/{user}/sessions
+  - [x] GET /sessions (user's sessions across all hotspot users)
+  - [x] GET /notifications, GET /notifications/{notification}
+- [x] **Admin Endpoints** (role:admin required)
+  - [x] GET /admin/metrics (system metrics using MetricsService)
+  - [x] GET /admin/orders (global order listing)
+  - [x] GET /admin/payments (global payment listing)
+- [x] **Callback Endpoints**
+  - [x] POST /payments/callback/serdipay (signature verification, no auth)
+- [x] **Data Validation & Security**
+  - [x] Form request validation with French error messages
+  - [x] Authorization policies for data access control
+  - [x] Ownership checks (users can only access their own data)
+  - [x] Admin bypass for all policies
+- [x] **API Resources & Documentation**
+  - [x] Complete API resources for all models (User, Order, Payment, etc.)
+  - [x] Pagination support with metadata
+  - [x] OpenAPI v1 stub documentation (docs/openapi-v1.yaml)
+- [x] **Testing Coverage**
+  - [x] Authentication tests (login, logout, profile access)
+  - [x] Order flow tests (create order, initiate payment)
+  - [x] Policy enforcement tests (ownership validation)
+  - [x] Callback processing tests (SerdiPay webhook)
+  - [x] Rate limiting tests
+  - [x] Basic API functionality tests
+
+### 🔜 Étape 8: UI Livewire admin + portail utilisateur
 - [ ] Dashboard with statistics
 - [ ] User management interface
 - [ ] Session monitoring
@@ -567,6 +608,77 @@ php artisan queue:monitor
 4. Run tests: `composer test`
 5. Check code style: `composer lint`
 6. Submit a pull request
+
+## Étape 7 – API v1
+
+### Endpoints principaux
+
+L'API REST v1 est accessible via le préfixe `/api/v1/` et utilise l'authentification Sanctum avec tokens Bearer.
+
+#### Authentification
+- `POST /api/v1/auth/login` - Connexion (email ou téléphone + mot de passe)
+- `POST /api/v1/auth/logout` - Déconnexion (révoque le token actuel)
+- `GET /api/v1/me` - Profil de l'utilisateur connecté
+
+#### Endpoints publics
+- `GET /api/v1/user-profiles` - Liste des profils actifs (aucune authentification requise)
+
+#### Endpoints utilisateur (authentification requise)
+- `GET|POST /api/v1/orders` - Gestion des commandes
+- `GET /api/v1/orders/{order}` - Détails d'une commande
+- `GET /api/v1/payments/{payment}` - Détails d'un paiement
+- `POST /api/v1/payments/{order}/initiate` - Initier un paiement
+- `GET /api/v1/hotspot-users` - Comptes hotspot de l'utilisateur
+- `GET /api/v1/sessions` - Sessions de l'utilisateur
+- `GET /api/v1/notifications` - Notifications de l'utilisateur
+
+#### Endpoints admin (rôle admin requis)
+- `GET /api/v1/admin/metrics` - Métriques système
+- `GET /api/v1/admin/orders` - Toutes les commandes
+- `GET /api/v1/admin/payments` - Tous les paiements
+
+#### Callbacks
+- `POST /api/v1/payments/callback/serdipay` - Webhook SerdiPay (aucune auth, vérification signature)
+
+### Format de réponse
+
+Toutes les réponses API utilisent un format JSON standardisé :
+
+```json
+{
+  "success": true|false,
+  "data": <données>|null,
+  "meta": {
+    "pagination": {...}, // si applicable
+    "code": "..." // code d'erreur si applicable
+  },
+  "errors": null|<erreurs validation>
+}
+```
+
+### Rate limiting par rôle
+
+- **Admin** : 600 requêtes/minute
+- **Agent** : 300 requêtes/minute  
+- **User** : 120 requêtes/minute
+- **Auth endpoints** : 30 requêtes/minute (protection brute force)
+
+### TODO
+
+- Versioning complet de l'API
+- Documentation OpenAPI exhaustive
+- Refresh token flow
+- Webhooks externes complets
+- Pagination avancée cursor-based
+
+### Tests
+
+```bash
+# Tester l'API v1
+php artisan test --filter=Api\V1
+
+# Étape suivante : Étape 8 (UI Livewire admin + portail utilisateur)
+```
 
 ## License
 
