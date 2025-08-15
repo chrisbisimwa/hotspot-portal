@@ -14,4 +14,9 @@ enum HotspotUserStatus: string
     case SUSPENDED = 'suspended';
     case EXPIRED = 'expired';
     case DISABLED = 'disabled';
+
+    public static function values(): array
+    {
+        return array_column(self::cases(), 'value');
+    }
 }

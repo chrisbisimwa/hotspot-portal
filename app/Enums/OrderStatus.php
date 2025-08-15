@@ -16,4 +16,9 @@ enum OrderStatus: string
     case COMPLETED = 'completed';
     case CANCELLED = 'cancelled';
     case EXPIRED = 'expired';
+
+    public static function values(): array
+    {
+        return array_column(self::cases(), 'value');
+    }
 }
