@@ -31,6 +31,24 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         return view('admin.dashboard'); // Placeholder
     })->name('dashboard');
 
+    // Monitoring endpoints
+    Route::prefix('monitoring')->name('monitoring.')->group(function () {
+        Route::get('/metrics', function (\App\Domain\Monitoring\Services\MetricsService $metricsService) {
+            return response()->json([
+                'global' => $metricsService->global(),
+                'system' => $metricsService->system(),
+                'timestamp' => now()->toISOString()
+            ]);
+        })->name('metrics');
+
+        Route::get('/interfaces', function (\App\Domain\Monitoring\Services\MetricsService $metricsService) {
+            return response()->json([
+                'interfaces' => $metricsService->interfacesLoad(),
+                'timestamp' => now()->toISOString()
+            ]);
+        })->name('interfaces');
+    });
+
     // TODO: Add other admin routes here
     // Route::get('/profiles', [ProfileController::class, 'index'])->name('profiles.index');
     // Route::get('/users', [HotspotUserController::class, 'index'])->name('users.index');

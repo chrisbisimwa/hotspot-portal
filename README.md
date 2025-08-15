@@ -138,11 +138,39 @@ Run the seeder tests to ensure everything works correctly:
 - [ ] User registration flow
 - [ ] Password reset functionality
 
-### 🔜 Étape 6: Core Services
-- [ ] MikroTik RouterOS integration
-- [ ] User provisioning service
-- [ ] Session monitoring service
-- [ ] Payment processing (SerdiPay)
+### ✅ Étape 6: Scheduler & Monitoring (Completed)
+- [x] **Scheduled Jobs Implementation**
+  - [x] SyncMikrotikUsersJob (sync RouterOS users)
+  - [x] SyncActiveSessionsJob (track active sessions)
+  - [x] UpdateExpiredHotspotUsersJob (mark expired users)
+  - [x] ReconcilePaymentsJob (verify payment status)
+  - [x] DispatchPendingNotificationsJob (send queued notifications)
+  - [x] PruneOldLogsJob (cleanup old logs)
+- [x] **Artisan Commands**
+  - [x] `hotspot:sync-users` - Manual Mikrotik user sync
+  - [x] `hotspot:sync-sessions` - Manual session sync
+  - [x] `hotspot:expire-users` - Manual user expiration check
+  - [x] `billing:reconcile-payments` - Manual payment reconciliation
+  - [x] `notifications:dispatch-pending` - Manual notification dispatch
+  - [x] `logs:prune` - Manual log cleanup
+  - [x] `monitoring:print-metrics` - Display system metrics
+- [x] **Monitoring System**
+  - [x] MetricsService for system statistics
+  - [x] Admin monitoring endpoints (/admin/monitoring/metrics, /admin/monitoring/interfaces)
+  - [x] Memory usage, queue status, interface load tracking
+- [x] **Scheduler Configuration**
+  - [x] Laravel 12 scheduler setup in routes/console.php
+  - [x] Configurable CRON expressions via environment variables
+  - [x] Job retry policies and tags
+- [x] **Testing**
+  - [x] Pest feature tests for all jobs
+  - [x] Monitoring service tests
+  - [x] Protected route access tests
+- [x] **Configuration Files**
+  - [x] config/scheduler.php (CRON expressions)
+  - [x] config/logging_extra.php (log retention)
+  - [x] config/billing.php (reconciliation batch size)
+  - [x] Enhanced config/notifications.php (dispatch batch size)
 
 ### 🔜 Étape 7: Admin Interface (Livewire)
 - [ ] Dashboard with statistics
@@ -322,6 +350,213 @@ SERDIPAY_BASE_URL=https://api.serdipay.com
 SERDIPAY_PUBLIC_KEY=your_public_key
 SERDIPAY_SECRET_KEY=your_secret
 SERDIPAY_WEBHOOK_SECRET=webhook_secret_signature
+```
+
+## Étape 6 – Scheduler & Monitoring
+
+The application implements a complete background job system with monitoring capabilities for automated hotspot management.
+
+### Scheduled Jobs
+
+The following background jobs run automatically via Laravel's scheduler:
+
+#### Job Descriptions
+
+**SyncMikrotikUsersJob** (*/10 * * * *)
+- Synchronizes user data from MikroTik router with local database
+- Logs unknown usernames for future mapping
+- Execution time tracking and error handling
+
+**SyncActiveSessionsJob** (*/2 * * * *)
+- Retrieves active sessions from MikroTik router
+- Creates/updates session records in hotspot_sessions table
+- Automatically closes sessions no longer active on router
+- Tracks data usage (upload/download MB)
+
+**UpdateExpiredHotspotUsersJob** (*/15 * * * *)
+- Marks hotspot users as expired based on expired_at timestamp
+- Updates user status from active → expired
+- Preserves user data for reporting purposes
+
+**ReconcilePaymentsJob** (*/5 * * * *)
+- Verifies pending payment status with gateway
+- Processes payments in configurable batches (default: 50)
+- Updates payment status and triggers provisioning
+
+**DispatchPendingNotificationsJob** (* * * * *)
+- Sends queued notifications via SMS/Email
+- Processes notifications in batches (default: 50)
+- Updates notification status (sent/failed)
+
+**PruneOldLogsJob** (0 2 * * *)
+- Removes old log entries from database
+- Configurable retention period (default: 30 days)
+- Runs daily at 2 AM
+
+### Manual Job Execution
+
+Execute jobs manually via artisan commands:
+
+```bash
+# Sync users from MikroTik
+php artisan hotspot:sync-users
+
+# Sync active sessions
+php artisan hotspot:sync-sessions
+
+# Mark expired users
+php artisan hotspot:expire-users
+
+# Reconcile payment status
+php artisan billing:reconcile-payments --batch-size=25
+
+# Dispatch pending notifications  
+php artisan notifications:dispatch-pending --batch-size=100
+
+# Prune old logs
+php artisan logs:prune --days=7
+
+# Display system metrics
+php artisan monitoring:print-metrics
+```
+
+### Scheduler Configuration
+
+Configure job schedules via environment variables:
+
+```env
+# CRON expressions for job scheduling
+CRON_SYNC_USERS="*/10 * * * *"
+CRON_SYNC_SESSIONS="*/2 * * * *"
+CRON_EXPIRE_USERS="*/15 * * * *"
+CRON_RECONCILE_PAYMENTS="*/5 * * * *"
+CRON_DISPATCH_NOTIFICATIONS="* * * * *"
+CRON_PRUNE_LOGS="0 2 * * *"
+
+# Batch sizes for job processing
+BILLING_RECONCILE_BATCH_SIZE=50
+NOTIFY_DISPATCH_BATCH=50
+LOG_PRUNE_AFTER_DAYS=30
+```
+
+### Running the Scheduler
+
+Start the scheduler for continuous job processing:
+
+```bash
+# Production: Add to crontab
+* * * * * cd /path-to-your-project && php artisan schedule:run >> /dev/null 2>&1
+
+# Development: Run worker process
+php artisan schedule:work
+```
+
+### Monitoring System
+
+The application provides comprehensive monitoring capabilities:
+
+#### Admin Monitoring Endpoints
+
+**GET /admin/monitoring/metrics** (Admin only)
+```json
+{
+  "global": {
+    "total_users": 150,
+    "active_users": 140,
+    "hotspot_users": 89,
+    "active_hotspot_users": 45,
+    "user_profiles_active": 3,
+    "orders_last_24h": 12,
+    "revenue_last_24h": 240.00,
+    "active_sessions_count": 23,
+    "payments_pending": 3,
+    "notifications_queued": 0
+  },
+  "system": {
+    "memory_usage": {
+      "current": 33554432,
+      "peak": 35651584,
+      "formatted": {
+        "current": "32 MB",
+        "peak": "34 MB"
+      }
+    },
+    "queue_pending": 5,
+    "server_load": "TODO: implement server load monitoring"
+  },
+  "timestamp": "2025-08-15T18:00:00.000000Z"
+}
+```
+
+**GET /admin/monitoring/interfaces** (Admin only)
+```json
+{
+  "interfaces": [
+    {
+      "interface": "wlan1",
+      "connected_users": 15,
+      "last_sync_at": "2025-08-15T18:00:00.000000Z"
+    },
+    {
+      "interface": "wlan2", 
+      "connected_users": 8,
+      "last_sync_at": "2025-08-15T18:00:00.000000Z"
+    }
+  ],
+  "timestamp": "2025-08-15T18:00:00.000000Z"
+}
+```
+
+#### Command Line Monitoring
+
+```bash
+# Display formatted system metrics
+php artisan monitoring:print-metrics
+
+# View scheduled jobs status
+php artisan schedule:list
+
+# Monitor queue status
+php artisan queue:monitor redis:default --max=100
+```
+
+### Testing Jobs & Monitoring
+
+```bash
+# Run job-specific tests
+php artisan test --filter=Jobs
+
+# Run monitoring tests  
+php artisan test --filter=Monitoring
+
+# Test scheduler configuration
+php artisan schedule:test
+
+# Test specific job manually
+php artisan test tests/Feature/Jobs/SyncActiveSessionsJobTest.php
+```
+
+### Troubleshooting
+
+**Common Issues:**
+
+1. **Jobs not running:** Verify scheduler is active (`php artisan schedule:work`)
+2. **MikroTik connection errors:** Enable fake mode (`MIKROTIK_FAKE=true`) for testing
+3. **Payment reconciliation fails:** Check gateway credentials and network connectivity
+4. **Memory issues:** Adjust batch sizes in job configuration
+5. **Permission errors:** Ensure proper file permissions for log directories
+
+**Debugging:**
+
+```bash
+# View application logs
+tail -f storage/logs/laravel.log
+
+# Debug specific job
+php artisan queue:work --timeout=300 --tries=1 --verbose
+
+# Check queue status
+php artisan queue:monitor
 ```
 
 ## Contributing
