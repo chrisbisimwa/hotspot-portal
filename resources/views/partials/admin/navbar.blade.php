@@ -44,7 +44,7 @@
                 <a href="#" class="dropdown-item">
                     <!-- Message Start -->
                     <div class="media">
-                        <img src="{{ asset('images/user1-128x128.jpg') }}" alt="User Avatar" class="img-size-50 mr-3 img-circle">
+                        <img src="{{ asset('images/user1-128x128.jpg') }}" alt="User Avatar" class="img-size-50 mr-3 img-circle" onerror="this.onerror=null;this.src='{{ asset('images/default-avatar.png') }}';">
                         <div class="media-body">
                             <h3 class="dropdown-item-title">
                                 Admin User
