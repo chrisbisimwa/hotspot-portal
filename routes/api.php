@@ -27,10 +27,10 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::prefix('api/v1')->name('api.v1.')->group(function () {
+Route::prefix('v1')->name('api.v1.')->group(function () {
     
     // Authentication routes (rate limited for brute force protection)
-    Route::middleware(['throttle:api-auth'])->group(function () {
+    Route::middleware(['throttle:30,1'])->group(function () {
         Route::post('/auth/login', [AuthController::class, 'login'])->name('auth.login');
     });
     
