@@ -98,22 +98,33 @@ class SyncActiveSessionsJob implements ShouldQueue
             }
 
             // Close sessions that are no longer active in Mikrotik
-            $activeSessionIds = collect($activeSessions)->pluck('.id')->filter()->toArray();
+            $activeSessionIds = collect($activeSessions)->map(function ($session) {
+                return $session['.id'] ?? null;
+            })->filter()->values()->toArray();
             
+            // Only close sessions if we have processed some active sessions
             if (!empty($activeSessionIds)) {
-                $closedSessions = HotspotSession::whereNull('stop_time')
+                $sessionsToClose = HotspotSession::whereNull('stop_time')
                     ->whereNotIn('mikrotik_session_id', $activeSessionIds)
-                    ->update([
+                    ->get();
+                    
+                $closedSessions = $sessionsToClose->each(function ($session) {
+                    $sessionDuration = $session->start_time ? now()->diffInSeconds($session->start_time) : 3600;
+                    $session->update([
                         'stop_time' => now(),
-                        'session_time' => 3600 // Placeholder - TODO: fix calculation per session
+                        'session_time' => $sessionDuration
                     ]);
+                })->count();
             } else {
-                // If no active sessions, close all open sessions
-                $closedSessions = HotspotSession::whereNull('stop_time')
-                    ->update([
+                // If no active sessions from Mikrotik, close all open sessions
+                $openSessions = HotspotSession::whereNull('stop_time')->get();
+                $closedSessions = $openSessions->each(function ($session) {
+                    $sessionDuration = $session->start_time ? now()->diffInSeconds($session->start_time) : 3600;
+                    $session->update([
                         'stop_time' => now(),
-                        'session_time' => 3600 // Placeholder
+                        'session_time' => $sessionDuration
                     ]);
+                })->count();
             }
 
             $executionTime = microtime(true) - $startTime;
