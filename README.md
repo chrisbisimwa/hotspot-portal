@@ -123,13 +123,14 @@ Run the seeder tests to ensure everything works correctly:
 - [x] Test validation for seeders
 - [x] Development helper command (dev:rebuild)
 
-### 🔜 Étape 4: Models & Relationships (Next)
-- [ ] User model extensions
-- [ ] HotspotUser model
-- [ ] Session model
-- [ ] Order and Payment models
-- [ ] Notification model
-- [ ] Model relationships validation
+### ✅ Étape 4: Domain Services (Completed)
+- [x] MikroTik RouterOS API integration service layer
+- [x] SerdiPay payment gateway service layer
+- [x] Fake mode support for development and testing
+- [x] Domain-driven design structure (Contracts, DTOs, Services, Exceptions)
+- [x] Unit tests for all services using Pest
+- [x] Payment status transition management
+- [x] Service provider with dependency injection
 
 ### 🔜 Étape 5: Authentication & Authorization
 - [ ] Sanctum API authentication
@@ -187,6 +188,63 @@ Run the seeder tests to ensure everything works correctly:
 - [ ] Email notifications
 - [ ] In-app notifications
 - [ ] Webhook notifications for third-party services
+
+## Domain Services (Étape 4)
+
+The application implements a Domain-Driven Design approach with dedicated service layers for Mikrotik RouterOS integration and payment processing.
+
+### Mikrotik Domain (`app/Domain/Hotspot/`)
+
+**Interface**: `MikrotikApiInterface` provides methods for:
+- User management (create, remove, suspend, resume)
+- Session control (get active sessions, disconnect users)
+- System monitoring (AP interface load, ping)
+
+**Service**: `MikrotikApiService` implements the interface using the `evilfreelancer/routeros-api-php` package with:
+- Real RouterOS API integration
+- Fake mode for development (`MIKROTIK_FAKE=true` or `host=demo`)
+- Comprehensive error handling and logging
+- Automatic connection management
+
+**DTOs**: 
+- `HotspotUserProvisionData` - User creation parameters
+- `MikrotikUserResult` - User creation results
+
+### Billing Domain (`app/Domain/Billing/`)
+
+**Interface**: `PaymentGatewayInterface` provides methods for:
+- Payment initiation
+- Transaction verification  
+- Webhook callback parsing
+
+**Services**:
+- `SerdiPayGateway` - SerdiPay API integration with fake mode support
+- `PaymentService` - Orchestrates payment workflows with status transitions
+
+**DTOs**:
+- `InitiatePaymentResponse` - Payment initiation results
+- `VerifyPaymentResult` - Transaction verification results
+- `CallbackParseResult` - Webhook callback parsing results
+
+### Fake Mode Support
+
+Both domains support fake mode for development and testing:
+- **Mikrotik**: Set `MIKROTIK_FAKE=true` or use `host=demo`
+- **SerdiPay**: Set `SERDIPAY_FAKE=true` (default)
+
+Fake mode returns realistic simulated data without making external API calls.
+
+### Testing
+
+Unit tests are included for all services using Pest PHP:
+```bash
+# Run all domain tests
+php artisan test --filter=Domain
+
+# Run specific domain tests
+php artisan test tests/Unit/Domain/Hotspot/
+php artisan test tests/Unit/Domain/Billing/
+```
 
 ## Configuration
 

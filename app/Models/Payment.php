@@ -119,4 +119,40 @@ class Payment extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    /**
+     * Check if payment can transition to a new status
+     */
+    public function canTransitionTo(PaymentStatus $status): bool
+    {
+        $currentStatus = $this->status_enum;
+        
+        if ($currentStatus === null) {
+            return $status === PaymentStatus::PENDING;
+        }
+
+        return match ($currentStatus) {
+            PaymentStatus::PENDING => in_array($status, [
+                PaymentStatus::INITIATED,
+                PaymentStatus::CANCELLED,
+            ]),
+            PaymentStatus::INITIATED => in_array($status, [
+                PaymentStatus::PROCESSING,
+                PaymentStatus::SUCCESS,
+                PaymentStatus::FAILED,
+                PaymentStatus::CANCELLED,
+            ]),
+            PaymentStatus::PROCESSING => in_array($status, [
+                PaymentStatus::SUCCESS,
+                PaymentStatus::FAILED,
+                PaymentStatus::CANCELLED,
+            ]),
+            PaymentStatus::SUCCESS => in_array($status, [
+                PaymentStatus::REFUNDED,
+            ]),
+            PaymentStatus::FAILED,
+            PaymentStatus::CANCELLED,
+            PaymentStatus::REFUNDED => false, // Terminal states
+        };
+    }
 }
