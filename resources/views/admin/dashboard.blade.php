@@ -129,7 +129,7 @@
                             </tr>
                             <tr>
                                 <td>
-                                    <img src="{{ asset('images/user2-160x160.jpg') }}" alt="User" class="img-circle img-size-32 mr-2">
+                                    <img src="{{ asset('images/user2-160x160.jpg') }}" alt="User" class="img-circle img-size-32 mr-2" onerror="this.onerror=null;this.src='{{ asset('images/default-avatar.png') }}';">
                                     user002
                                 </td>
                                 <td>
