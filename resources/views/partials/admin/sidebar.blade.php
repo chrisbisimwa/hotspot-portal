@@ -11,7 +11,11 @@
         <!-- Sidebar user panel (optional) -->
         <div class="user-panel mt-3 pb-3 mb-3 d-flex">
             <div class="image">
-                <img src="{{ asset('images/user2-160x160.jpg') }}" class="img-circle elevation-2" alt="User Image">
+                @php
+                    $userImage = public_path('images/user2-160x160.jpg');
+                    $defaultImage = asset('images/default-avatar.png');
+                @endphp
+                <img src="{{ File::exists($userImage) ? asset('images/user2-160x160.jpg') : $defaultImage }}" class="img-circle elevation-2" alt="User Image">
             </div>
             <div class="info">
                 <!-- TODO: Replace with actual user name when auth is implemented -->
