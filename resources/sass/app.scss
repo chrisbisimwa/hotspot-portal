@@ -1,0 +1,45 @@
+// Bootstrap 4.6.2
+@import '~bootstrap/scss/bootstrap';
+
+// AdminLTE 3.2.0
+@import '~admin-lte/dist/css/adminlte.min.css';
+
+// OverlayScrollbars
+@import '~overlayscrollbars/styles/overlayscrollbars.min.css';
+
+// Custom variables and overrides
+:root {
+    --primary-color: #007bff;
+    --secondary-color: #6c757d;
+    --success-color: #28a745;
+    --danger-color: #dc3545;
+    --warning-color: #ffc107;
+    --info-color: #17a2b8;
+}
+
+// Custom styles
+body {
+    font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
+}
+
+// AdminLTE sidebar customizations
+.main-sidebar {
+    .nav-sidebar .nav-item > .nav-link {
+        border-radius: 0.25rem;
+        margin: 0.1rem;
+    }
+}
+
+// Custom card styling
+.card {
+    box-shadow: 0 0 1px rgba(0,0,0,.125), 0 1px 3px rgba(0,0,0,.2);
+    margin-bottom: 1rem;
+}
+
+// Loading state
+.loading {
+    pointer-events: none;
+    opacity: 0.6;
+}
+
+// TODO: Add more custom styles as needed for hotspot portal specific components
