@@ -6,17 +6,23 @@
         "dev": "vite"
     },
     "dependencies": {
-        "@tailwindcss/vite": "^4.1.11",
-        "autoprefixer": "^10.4.20",
+        "admin-lte": "^3.2.0",
+        "bootstrap": "4.6.2",
+        "jquery": "^3.6.0",
+        "popper.js": "^1.16.1",
+        "overlayscrollbars": "^2.0.0",
         "axios": "^1.7.4",
-        "concurrently": "^9.0.1",
+        "sass": "^1.69.0",
+        "chart.js": "^4.0.0",
+        "sweetalert2": "^11.0.0",
         "laravel-vite-plugin": "^2.0",
-        "tailwindcss": "^4.0.7",
         "vite": "^7.0.4"
+    },
+    "devDependencies": {
+        "concurrently": "^9.0.1"
     },
     "optionalDependencies": {
         "@rollup/rollup-linux-x64-gnu": "4.9.5",
-        "@tailwindcss/oxide-linux-x64-gnu": "^4.0.1",
         "lightningcss-linux-x64-gnu": "^1.29.1"
     }
 }

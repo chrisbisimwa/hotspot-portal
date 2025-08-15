@@ -1,0 +1,62 @@
+// Bootstrap 4.6 variables (can be overridden before import)
+$primary: #007bff;
+$secondary: #6c757d;
+$success: #28a745;
+$info: #17a2b8;
+$warning: #ffc107;
+$danger: #dc3545;
+$light: #f8f9fa;
+$dark: #343a40;
+
+// Import Bootstrap 4.6
+@import '~bootstrap/scss/bootstrap';
+
+// Import AdminLTE 3
+@import '~admin-lte/dist/css/adminlte.min.css';
+
+// Import OverlayScrollbars
+@import '~overlayscrollbars/styles/overlayscrollbars.css';
+
+// Custom styles for HotspotPortal
+.main-header {
+    .navbar {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+}
+
+.main-sidebar {
+    .sidebar {
+        background: #2d3748;
+    }
+}
+
+.content-wrapper {
+    background-color: #f4f6f9;
+}
+
+// Dashboard cards
+.card {
+    box-shadow: 0 0 1px rgba(0,0,0,.125), 0 1px 3px rgba(0,0,0,.2);
+    transition: box-shadow 0.15s ease-in-out;
+
+    &:hover {
+        box-shadow: 0 0 1px rgba(0,0,0,.125), 0 1px 3px rgba(0,0,0,.3);
+    }
+}
+
+// Custom utilities
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+}
+
+.bg-gradient-success {
+    background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+}
+
+.bg-gradient-warning {
+    background: linear-gradient(135deg, #ffc107 0%, #d39e00 100%);
+}
+
+.bg-gradient-danger {
+    background: linear-gradient(135deg, #dc3545 0%, #bd2130 100%);
+}

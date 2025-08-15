@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     
-    <title>{{ $title ?? config('app.name', 'HotspotPortal') }}</title>
+    <title>@yield('title', config('app.name', 'HotspotPortal'))</title>
 
     <!-- Fonts -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
@@ -106,7 +106,7 @@
                         </div>
                     @endif
 
-                    {{ $slot }}
+                    @yield('content')
                 </div>
             </div>
             <!-- /.content -->
