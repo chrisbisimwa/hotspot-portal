@@ -24,7 +24,7 @@ return new class extends Migration
             $table->string('user_agent')->nullable();
             $table->timestamps();
             $table->softDeletes();
-            
+
             $table->index(['loggable_type', 'loggable_id']);
         });
     }

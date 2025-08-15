@@ -32,7 +32,7 @@ return new class extends Migration
             $table->json('meta')->nullable();
             $table->timestamps();
             $table->softDeletes();
-            
+
             $table->index(['provider', 'status']);
             $table->index(['order_id', 'status']);
             $table->index(['user_id', 'status']);

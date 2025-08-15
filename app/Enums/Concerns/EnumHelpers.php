@@ -20,11 +20,11 @@ trait EnumHelpers
     public static function labels(): array
     {
         $labels = [];
-        
+
         foreach (self::cases() as $case) {
             $labels[$case->value] = self::formatLabel($case->name);
         }
-        
+
         return $labels;
     }
 

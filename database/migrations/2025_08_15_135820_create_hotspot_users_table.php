@@ -25,7 +25,7 @@ return new class extends Migration
             $table->timestamp('last_login_at')->nullable();
             $table->timestamps();
             $table->softDeletes();
-            
+
             $table->index('username');
         });
     }
