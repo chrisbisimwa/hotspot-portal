@@ -100,7 +100,7 @@ class User extends Authenticatable
         if (is_array($status)) {
             return $query->whereIn('status', $status);
         }
-        
+
         return $query->where('status', $status);
     }
 
@@ -112,7 +112,7 @@ class User extends Authenticatable
         if (is_array($type)) {
             return $query->whereIn('user_type', $type);
         }
-        
+
         return $query->where('user_type', $type);
     }
 

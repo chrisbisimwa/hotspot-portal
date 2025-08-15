@@ -68,7 +68,7 @@ class Log extends Model
         if (is_array($statusOrArray)) {
             return $query->whereIn('level', $statusOrArray);
         }
-        
+
         return $query->where('level', $statusOrArray);
     }
 

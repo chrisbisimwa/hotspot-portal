@@ -24,7 +24,7 @@ return new class extends Migration
             $table->string('interface')->nullable();
             $table->string('mikrotik_session_id')->nullable();
             $table->timestamps();
-            
+
             $table->index('hotspot_user_id');
             $table->index('interface');
         });

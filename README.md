@@ -34,11 +34,16 @@ HotspotPortal is a web-based management system for Wi-Fi hotspot services. It pr
    php artisan key:generate
    ```
 
-3. **Database setup**
+3. **Database setup and seeding**
    ```bash
    touch database/database.sqlite
-   php artisan migrate
+   php artisan migrate:fresh --seed
    ```
+
+   This will create the database structure and seed it with:
+   - Default roles (admin, agent, user)
+   - Super admin user (email: `admin@demo.test`, password: `password`)
+   - Sample user profiles (2H, 1DAY, 1WEEK packages)
 
 4. **Build assets and start development**
    ```bash
@@ -46,9 +51,54 @@ HotspotPortal is a web-based management system for Wi-Fi hotspot services. It pr
    php artisan serve
    ```
 
+## Seeding
+
+The application includes comprehensive seeders for setting up initial data:
+
+### Available Seeders
+
+1. **RolesAndPermissionsSeeder** - Creates basic user roles
+   - `admin` - Full system access
+   - `agent` - Limited administrative access  
+   - `user` - Standard user access
+
+2. **AdminUserSeeder** - Creates super admin account
+   - Email: `admin@demo.test`
+   - Password: `password`
+   - Automatically assigned admin role
+
+3. **UserProfilesSeeder** - Creates sample internet packages
+   - `2H` - 2 hours access (1.50 CDF)
+   - `1DAY` - 1 day access (3.00 CDF) 
+   - `1WEEK` - 1 week access (12.00 CDF)
+
+4. **DemoUsersSeeder** - Creates demo users (local environment only)
+   - 5 sample users for testing
+   - All assigned user role
+
+### Running Seeders
+
+```bash
+# Fresh database with all seeders
+php artisan migrate:fresh --seed
+
+# Run specific seeders
+php artisan db:seed --class=RolesAndPermissionsSeeder
+
+# Development helper (local only)
+php artisan dev:rebuild
+```
+
+### Testing Seeders
+
+Run the seeder tests to ensure everything works correctly:
+```bash
+./vendor/bin/pest tests/Feature/SeedersTest.php
+```
+
 ## Development Roadmap
 
-### ✅ Étape 1: Base technique (Current)
+### ✅ Étape 1: Base technique (Completed)
 - [x] Dependencies setup (Composer + NPM)
 - [x] AdminLTE 3 + Bootstrap 4.6 integration
 - [x] Vite configuration
@@ -57,27 +107,29 @@ HotspotPortal is a web-based management system for Wi-Fi hotspot services. It pr
 - [x] Environment configuration
 - [x] Basic testing setup
 
-### 🚧 Étape 2: Migrations & Enums (Next)
-- [ ] User profiles migration
-- [ ] Hotspot users migration  
-- [ ] Sessions tracking migration
-- [ ] Orders and payments migrations
-- [ ] Notification system migrations
-- [ ] Enum classes for user roles, payment status, etc.
+### ✅ Étape 2: Migrations & Enums (Completed)
+- [x] User profiles migration
+- [x] Hotspot users migration  
+- [x] Sessions tracking migration
+- [x] Orders and payments migrations
+- [x] Notification system migrations
+- [x] Enum classes for user roles, payment status, etc.
 
-### 🔜 Étape 3: Models & Relationships
+### ✅ Étape 3: Seeders & Factories (Completed)
+- [x] Role and permission seeder (admin, agent, user)
+- [x] Admin user seeder (admin@demo.test)
+- [x] User profiles seeder (2H, 1DAY, 1WEEK packages)
+- [x] Factory classes for all models
+- [x] Test validation for seeders
+- [x] Development helper command (dev:rebuild)
+
+### 🔜 Étape 4: Models & Relationships (Next)
 - [ ] User model extensions
 - [ ] HotspotUser model
 - [ ] Session model
 - [ ] Order and Payment models
 - [ ] Notification model
-- [ ] Model relationships and factories
-
-### 🔜 Étape 4: Seeders & Sample Data
-- [ ] Role and permission seeder
-- [ ] Admin user seeder
-- [ ] Sample hotspot profiles
-- [ ] Demo data for testing
+- [ ] Model relationships validation
 
 ### 🔜 Étape 5: Authentication & Authorization
 - [ ] Sanctum API authentication

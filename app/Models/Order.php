@@ -80,7 +80,7 @@ class Order extends Model
         if (is_array($statusOrArray)) {
             return $query->whereIn('status', $statusOrArray);
         }
-        
+
         return $query->where('status', $statusOrArray);
     }
 
