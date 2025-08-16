@@ -718,6 +718,200 @@ php artisan test --filter=Api\V1
 # Étape suivante : Étape 8 (UI Livewire admin + portail utilisateur)
 ```
 
+## ✅ Étape 9: Advanced Reporting & Real-time Charts (Completed)
+
+The advanced reporting system has been implemented with modular report builders, async exports, and real-time capabilities.
+
+### Core Reporting Features
+- [x] **Modular Report Builders** - Interface-based system with 4 initial reports
+- [x] **Async Export System** - CSV/PDF generation with secure downloads
+- [x] **Caching Layer** - Configurable TTL for report results
+- [x] **Daily Snapshots** - Automated metric archiving with scheduler
+- [x] **Broadcasting Events** - Real-time updates for exports and metrics
+- [x] **Secure Downloads** - Signed URLs with permission validation
+
+### Available Reports
+
+#### 1. Orders Summary Report (`orders_summary`)
+**Columns:** date, orders_count, total_amount, avg_amount  
+**Filters:** date_from, date_to (default: last 7 days)  
+**Description:** Daily aggregated summary of orders with count and financial metrics
+
+#### 2. Payments Status Breakdown (`payments_status_breakdown`)
+**Columns:** status, count, total_amount (SUCCESS sum net_amount)  
+**Filters:** date_from, date_to  
+**Description:** Breakdown of payments by status with count and total amounts
+
+#### 3. Hotspot Usage Report (`hotspot_usage`)
+**Columns:** user_profile, users_created, active_sessions, data_sum_mb  
+**Filters:** date_from, date_to  
+**Description:** Usage statistics by user profile including users and session data
+
+#### 4. User Growth Report (`user_growth`)
+**Columns:** date, new_users  
+**Filters:** date_from, date_to  
+**Description:** Daily user registration statistics showing growth over time
+
+### Export System
+
+#### Configuration
+```bash
+# .env configuration
+REPORTING_CACHE_TTL=300           # Cache TTL in seconds
+EXPORTS_RETENTION_DAYS=7          # Export file retention
+EXPORTS_MAX_ROWS=50000           # Maximum rows per report
+```
+
+#### Usage Flow
+```bash
+# 1. Access reports interface
+GET /admin/reports
+
+# 2. View specific report with filters
+GET /admin/reports/orders_summary
+
+# 3. Request export (queues background job)
+POST /admin/reports/orders_summary/export
+{
+  "format": "csv",
+  "filters": {
+    "date_from": "2024-01-01",
+    "date_to": "2024-01-31"
+  }
+}
+
+# 4. Download completed export (signed URL)
+GET /admin/exports/{export}/download
+```
+
+#### Background Jobs & Scheduling
+```bash
+# Daily metric snapshots (01:05)
+php artisan queue:work --job=SnapshotDailyMetricsJob
+
+# Export processing (on-demand)
+php artisan queue:work --job=ProcessExportJob
+
+# Cleanup old exports (02:15 daily)
+php artisan queue:work --job=PurgeOldExportsJob
+```
+
+### Technical Architecture
+
+#### Domain Layer Structure
+```
+app/Domain/Reporting/
+├── Contracts/ReportBuilderInterface.php
+├── DTO/
+│   ├── ReportResult.php
+│   └── ExportRequestData.php
+├── Services/
+│   ├── AbstractReportBuilder.php
+│   ├── ReportRegistry.php
+│   ├── ExportService.php
+│   └── ReportCacheService.php
+├── Builders/
+│   ├── OrdersSummaryReportBuilder.php
+│   ├── PaymentsStatusBreakdownReportBuilder.php
+│   ├── HotspotUsageReportBuilder.php
+│   └── UserGrowthReportBuilder.php
+├── Events/
+│   ├── ExportCompleted.php
+│   └── MetricsUpdated.php
+└── Exceptions/ReportException.php
+```
+
+#### Database Schema
+```sql
+-- Exports tracking
+CREATE TABLE exports (
+    id BIGINT PRIMARY KEY,
+    report_key VARCHAR(255) INDEX,
+    format VARCHAR(10),
+    status VARCHAR(20) INDEX,
+    requested_by BIGINT FOREIGN KEY,
+    filters JSON,
+    total_rows INT,
+    file_path VARCHAR(255),
+    error_message TEXT,
+    started_at TIMESTAMP,
+    finished_at TIMESTAMP,
+    meta JSON,
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP
+);
+
+-- Daily metric snapshots
+CREATE TABLE metric_snapshots (
+    id BIGINT PRIMARY KEY,
+    snapshot_date DATE,
+    metric_key VARCHAR(255),
+    value JSON,
+    created_at TIMESTAMP,
+    UNIQUE(snapshot_date, metric_key)
+);
+```
+
+### Broadcasting & Real-time Updates
+
+#### Events
+- **ExportCompleted** - Notifies when export processing finishes
+- **MetricsUpdated** - Broadcasts metric updates for dashboards
+
+#### Channels
+- `private-admin-exports` - Export status updates
+- `private-admin-metrics` - Real-time metric updates
+
+### Testing
+
+```bash
+# Run reporting tests
+php artisan test --filter=Reporting
+
+# Run specific test suites
+php artisan test tests/Unit/Reporting/
+php artisan test tests/Feature/Reporting/
+php artisan test tests/Feature/Jobs/
+php artisan test tests/Feature/Livewire/ReportsViewerTest.php
+```
+
+### Performance & Limitations
+
+- **Caching:** Report results cached for 5 minutes (configurable)
+- **Row Limit:** Maximum 50,000 rows per report (prevents memory issues)
+- **Export Retention:** Files automatically purged after 7 days
+- **Format Support:** CSV (lightweight) and PDF (formatted) exports
+- **Security:** Signed download URLs with ownership validation
+
+### Future Enhancements (TODO)
+
+- [ ] **WebSocket Production Scaling** - Redis pub/sub for multi-server setups
+- [ ] **Advanced Charts** - ApexCharts integration for dynamic visualizations  
+- [ ] **Complex Filtering** - Multi-criteria joins and advanced query builders
+- [ ] **Excel Export** - XLSX format support via maatwebsite/excel
+- [ ] **Report Scheduling** - Automated recurring exports via email
+- [ ] **Custom Report Builder** - UI for creating ad-hoc reports
+
+### Example Usage
+
+```php
+// Register a new report builder
+$registry = app(\App\Domain\Reporting\Services\ReportRegistry::class);
+$registry->register(new CustomReportBuilder());
+
+// Request an export programmatically
+$exportService = app(\App\Domain\Reporting\Services\ExportService::class);
+$export = $exportService->requestExport(
+    'orders_summary',
+    'pdf',
+    ['date_from' => '2024-01-01', 'date_to' => '2024-01-31'],
+    auth()->user()
+);
+
+// Manual snapshot creation
+php artisan queue:dispatch "App\Jobs\SnapshotDailyMetricsJob" --arguments="2024-01-01"
+```
+
 ## License
 
 This project is open-sourced software licensed under the [MIT license](LICENSE).

@@ -46,6 +46,15 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         })->name('interfaces');
     });
 
+    // Export download routes
+    Route::get('/exports/{export}/download', [\App\Http\Controllers\Admin\ExportDownloadController::class, 'download'])
+        ->name('exports.download');
+
+    // Reports routes
+    Route::get('/reports', \App\Livewire\Admin\Reports\ReportsIndex::class)->name('reports.index');
+    Route::get('/reports/{reportKey}', \App\Livewire\Admin\Reports\ReportViewer::class)->name('reports.viewer');
+    Route::get('/exports', \App\Livewire\Admin\Exports\ExportsList::class)->name('exports.index');
+
     // TODO: Add other admin routes here
     // Route::get('/profiles', [ProfileController::class, 'index'])->name('profiles.index');
     // Route::get('/users', [HotspotUserController::class, 'index'])->name('users.index');
