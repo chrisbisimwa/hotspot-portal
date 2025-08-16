@@ -35,49 +35,62 @@ class AdaptiveThrottle
             return $next($request);
         }
 
-        // Get adaptive limit for user role
-        $limit = $this->adaptiveLimiter->calculateLimit($userRole, $userId);
-        
-        // Create rate limiter key
-        $key = $this->getRateLimiterKey($request, $endpoint, $userId);
-        
-        // Check rate limit
-        if (RateLimiter::tooManyAttempts($key, $limit)) {
-            $retryAfter = $this->adaptiveLimiter->getRetryAfter();
+        try {
+            // Get adaptive limit for user role
+            $limit = $this->adaptiveLimiter->calculateLimit($userRole, $userId);
             
-            // Log rate limit hit
-            StructuredLog::warning('rate_limit_exceeded', [
-                'ip' => $ip,
-                'user_id' => $userId,
-                'user_role' => $userRole,
+            // Create rate limiter key
+            $key = $this->getRateLimiterKey($request, $endpoint, $userId);
+            
+            // Check rate limit
+            if (RateLimiter::tooManyAttempts($key, $limit)) {
+                $retryAfter = $this->adaptiveLimiter->getRetryAfter();
+                
+                // Log rate limit hit
+                StructuredLog::warning('rate_limit_exceeded', [
+                    'ip' => $ip,
+                    'user_id' => $userId,
+                    'user_role' => $userRole,
+                    'endpoint' => $endpoint,
+                    'limit' => $limit,
+                    'retry_after' => $retryAfter,
+                    'adaptive_limit_applied' => true,
+                ]);
+                
+                return response()->json([
+                    'message' => 'Too Many Requests',
+                    'retry_after' => $retryAfter,
+                    'limit' => $limit,
+                ], 429, [
+                    'Retry-After' => $retryAfter,
+                    'X-RateLimit-Limit' => $limit,
+                    'X-RateLimit-Remaining' => 0,
+                ]);
+            }
+            
+            // Hit the rate limiter
+            RateLimiter::hit($key, 60); // 1 minute window
+            
+            $response = $next($request);
+            
+            // Add rate limit headers
+            $remaining = RateLimiter::remaining($key, $limit);
+            $response->headers->set('X-RateLimit-Limit', $limit);
+            $response->headers->set('X-RateLimit-Remaining', max(0, $remaining));
+            
+            return $response;
+            
+        } catch (\Exception $e) {
+            // Log error but don't block request
+            StructuredLog::error('adaptive_throttle_error', [
+                'error' => $e->getMessage(),
                 'endpoint' => $endpoint,
-                'limit' => $limit,
-                'retry_after' => $retryAfter,
-                'adaptive_limit_applied' => true,
+                'user_role' => $userRole,
             ]);
             
-            return response()->json([
-                'message' => 'Too Many Requests',
-                'retry_after' => $retryAfter,
-                'limit' => $limit,
-            ], 429, [
-                'Retry-After' => $retryAfter,
-                'X-RateLimit-Limit' => $limit,
-                'X-RateLimit-Remaining' => 0,
-            ]);
+            // Continue without throttling if there's an error
+            return $next($request);
         }
-        
-        // Hit the rate limiter
-        RateLimiter::hit($key, 60); // 1 minute window
-        
-        $response = $next($request);
-        
-        // Add rate limit headers
-        $remaining = RateLimiter::remaining($key, $limit);
-        $response->headers->set('X-RateLimit-Limit', $limit);
-        $response->headers->set('X-RateLimit-Remaining', max(0, $remaining));
-        
-        return $response;
     }
 
     /**

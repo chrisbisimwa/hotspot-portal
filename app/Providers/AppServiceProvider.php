@@ -15,6 +15,10 @@ use App\Domain\Reporting\Events\ExportCompleted;
 use App\Domain\Webhooks\Services\WebhookEventDispatcher;
 use App\Events\IncidentStatusChanged;
 use App\Listeners\OnAlertMessageDispatched;
+use App\Listeners\SlowQueryListener;
+use App\Services\Feature\FeatureService;
+use Illuminate\Database\Events\QueryExecuted;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 
@@ -25,7 +29,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Register FeatureService as singleton
+        $this->app->singleton(FeatureService::class);
     }
 
     /**
@@ -116,5 +121,8 @@ class AppServiceProvider extends ServiceProvider
                 );
             }
         );
+
+        // Register slow query listener
+        Event::listen(QueryExecuted::class, SlowQueryListener::class);
     }
 }

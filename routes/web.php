@@ -69,3 +69,15 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 
 // Authentication routes
 require __DIR__.'/auth.php';
+
+// Health check endpoints (no authentication required)
+Route::prefix('health')->name('health.')->group(function () {
+    Route::get('/live', [App\Http\Controllers\HealthController::class, 'live'])->name('live');
+    Route::get('/ready', [App\Http\Controllers\HealthController::class, 'ready'])->name('ready');
+    Route::get('/summary', [App\Http\Controllers\HealthController::class, 'summary'])->name('summary');
+});
+
+// Internal metrics endpoint (protected by token)
+Route::prefix('internal')->name('internal.')->group(function () {
+    Route::get('/metrics', [App\Http\Controllers\Internal\MetricsController::class, 'export'])->name('metrics');
+});

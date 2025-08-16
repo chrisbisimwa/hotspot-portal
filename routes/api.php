@@ -39,14 +39,16 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         Route::post('/auth/token/refresh', [AuthController::class, 'refresh'])->name('auth.refresh'); // TODO placeholder
     });
     
-    // Public routes (no auth required)
-    Route::get('/user-profiles', [UserProfileController::class, 'index'])->name('user-profiles.index');
+    // Public routes (test cache middleware)
+    Route::middleware(['api-cache'])->group(function () {
+        Route::get('/user-profiles', [UserProfileController::class, 'index'])->name('user-profiles.index');
+    });
     
     // Payment callback (no auth, signature verification inside controller)
     Route::post('/payments/callback/serdipay', [SerdiPayCallbackController::class, 'handle'])->name('payments.callback.serdipay');
     
-    // Protected routes (require authentication and role-based rate limiting)
-    Route::middleware(['auth:sanctum', App\Http\Middleware\ResolveRoleRateLimiter::class])->group(function () {
+    // Protected routes (require authentication and adaptive rate limiting)
+    Route::middleware(['auth:sanctum', 'adaptive-throttle:api', 'chaos'])->group(function () {
         
         // Current user
         Route::get('/me', [MeController::class, 'show'])->name('me.show');
@@ -72,8 +74,8 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
         Route::get('/notifications/{notification}', [NotificationController::class, 'show'])->name('notifications.show');
         
-        // Admin routes (requires admin role)
-        Route::middleware(['role:admin'])->prefix('admin')->name('admin.')->group(function () {
+        // Admin routes (requires admin role with higher limits)
+        Route::middleware(['role:admin', 'adaptive-throttle:admin'])->prefix('admin')->name('admin.')->group(function () {
             Route::get('/metrics', [AdminMetricsController::class, 'index'])->name('metrics.index');
             Route::get('/orders', [AdminOrdersController::class, 'index'])->name('orders.index');
             Route::get('/payments', [AdminPaymentsController::class, 'index'])->name('payments.index');
