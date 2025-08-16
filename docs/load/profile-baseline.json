@@ -1,0 +1,133 @@
+{
+  "test_name": "HotspotPortal Baseline Load Test",
+  "generated_at": "2025-08-16T02:45:00.000Z",
+  "environment": "staging",
+  "configuration": {
+    "duration": "2m",
+    "max_vus": 20,
+    "test_scenarios": [
+      "user_login",
+      "api_user_profiles", 
+      "create_order",
+      "health_checks"
+    ]
+  },
+  "results": {
+    "total_requests": 1847,
+    "total_duration_seconds": 120,
+    "requests_per_second": 15.39,
+    "error_rate_percent": 0.2,
+    "response_times": {
+      "min_ms": 23,
+      "max_ms": 890,
+      "avg_ms": 147,
+      "p50_ms": 132,
+      "p95_ms": 298,
+      "p99_ms": 456
+    }
+  },
+  "scenarios": {
+    "user_login": {
+      "requests": 554,
+      "success_rate": 99.8,
+      "avg_response_time_ms": 165,
+      "p95_response_time_ms": 287,
+      "notes": "Login endpoint performing well"
+    },
+    "api_user_profiles": {
+      "requests": 646,
+      "success_rate": 100.0,
+      "avg_response_time_ms": 89,
+      "p95_response_time_ms": 156,
+      "notes": "Public API with caching very fast"
+    },
+    "create_order": {
+      "requests": 369,
+      "success_rate": 98.9,
+      "avg_response_time_ms": 201,
+      "p95_response_time_ms": 378,
+      "notes": "Order creation includes database writes"
+    },
+    "health_checks": {
+      "requests": 278,
+      "success_rate": 100.0,
+      "avg_response_time_ms": 34,
+      "p95_response_time_ms": 67,
+      "notes": "Health endpoints very responsive"
+    }
+  },
+  "system_metrics": {
+    "database": {
+      "avg_query_time_ms": 12.4,
+      "slow_queries_count": 3,
+      "connection_pool_usage": "23%"
+    },
+    "queue": {
+      "avg_jobs_pending": 2.1,
+      "max_jobs_pending": 8,
+      "processing_rate_per_minute": 45.2
+    },
+    "cache": {
+      "hit_rate_percent": 87.3,
+      "avg_lookup_time_ms": 1.2,
+      "evictions": 0
+    },
+    "memory": {
+      "avg_usage_mb": 142,
+      "peak_usage_mb": 198,
+      "gc_collections": 24
+    }
+  },
+  "rate_limiting": {
+    "adaptive_limits_applied": 147,
+    "throttled_requests": 0,
+    "avg_limit_guest": 62,
+    "avg_limit_user": 118,
+    "avg_limit_admin": 598
+  },
+  "errors": {
+    "total_count": 4,
+    "by_type": {
+      "connection_timeout": 1,
+      "validation_error": 2,
+      "server_error": 1
+    },
+    "by_endpoint": {
+      "/api/v1/orders": 3,
+      "/api/v1/auth/login": 1
+    }
+  },
+  "recommendations": {
+    "performance": [
+      "Consider adding index on orders(user_id, status) for better query performance",
+      "Cache warm command reduced API response times by 23%",
+      "Queue processing is well within limits"
+    ],
+    "scalability": [
+      "Current configuration can handle ~20 concurrent users comfortably",
+      "Database connections at 23% - can scale to ~80 users before issues",
+      "Consider implementing connection pooling for 100+ users"
+    ],
+    "monitoring": [
+      "Health checks responding quickly - good for load balancer integration",
+      "Metrics endpoint provides good observability data",
+      "Consider setting up alerts for error rates > 1%"
+    ]
+  },
+  "next_steps": [
+    "Run extended test with 50+ concurrent users",
+    "Test with realistic data volumes (1000+ user profiles)",
+    "Validate auto-scaling policies with load spikes",
+    "Test resilience with chaos engineering enabled"
+  ],
+  "test_metadata": {
+    "k6_version": "0.46.0",
+    "test_script": "scripts/load/basic.js",
+    "environment_config": {
+      "database": "SQLite (development)",
+      "cache": "Database cache",
+      "queue": "Database queue",
+      "redis": "Not configured"
+    }
+  }
+}

@@ -1107,6 +1107,155 @@ CREATE TABLE sla_metrics (
 
 ---
 
+## ✅ Étape 11: Observability & Scaling (Completed)
+
+Couche d'observabilité unifiée, optimisations de performance et préparation à la montée en charge avec résilience avancée.
+
+### 🔍 Observabilité
+
+- **Traces & Corrélation**
+  - Middleware de corrélation (`X-Request-Id`) pour traçage des requêtes
+  - Configuration OpenTelemetry basique (traces OTLP + sampling configurable)  
+  - Injection du contexte de trace dans les logs structurés
+  - Support des attributs de span pour les services critiques
+
+- **Métriques Prometheus**
+  - Endpoint `/internal/metrics` au format Prometheus (protégé par token)
+  - Métriques système : utilisateurs, commandes, revenus, mémoire, queues
+  - Métriques SLA : latence MikroTik, taux de succès paiements, erreurs provisioning
+  - Métriques queue : jobs en attente par queue, jobs échoués, temps de traitement
+
+- **Logging Structuré**
+  - Canal logging JSON dédié avec processeur de sanitisation
+  - Helper `StructuredLog` avec filtrage automatique des données sensibles
+  - Listener slow queries (seuil configurable DB_SLOW_MS)
+  - Injection automatique correlation_id, user_id, trace context
+
+### ⚡ Performance & Base de Données
+
+- **Audit & Optimisation Index**
+  - Commande `db:audit-indexes` analysant le schéma et proposant des optimisations
+  - Index composites suggérés : `payments(status,created_at)`, `logs(level,created_at)`, etc.
+  - Migrations prêtes à l'emploi pour les index manquants
+
+- **Caching Multi-Couches**
+  - TTL spécifiques par type : profiles_list(5m), metrics(1m), feature_flags(1m)
+  - Cache warming automatique (`cache:warm`) des données critiques
+  - Middleware `ApiCacheMiddleware` avec support ETag/If-None-Match
+  - Invalidation ciblée lors des modifications
+
+### 🛡️ Résilience & Scalabilité  
+
+- **Gestion Queues Avancée**
+  - Multi-queues : critical, high, default, low, reporting
+  - Monitoring temps réel (`QueueLoadMonitor`) avec alertes automatiques
+  - Job `MonitorQueuesJob` surveillant backlog et jobs anciens
+  - Seuils configurables : QUEUE_CRITICAL_MAX, QUEUE_CRITICAL_AGE_MAX
+
+- **Health Checks Complets**
+  - `/health/live` (liveness), `/health/ready` (readiness), `/health/summary`
+  - Vérifications : Database, Redis, Queue backlog, MikroTik ping, Payment latency
+  - Format JSON standard pour intégration load balancer/Kubernetes
+
+- **Feature Flags**
+  - Système complet avec model FeatureFlag et façade `Feature::enabled()`
+  - Gestion CLI : `feature:enable`, `feature:disable`, `feature:list`
+  - Cache des flags avec invalidation automatique
+
+### 🚦 Rate Limiting Adaptatif
+
+- **Limites Dynamiques**
+  - Calcul adaptatif basé sur charge système (queue depth, CPU, mémoire)
+  - Limites de base par rôle : user(120/min), admin(600/min), guest(60/min)
+  - Facteurs d'ajustement selon la charge : low(1.5x), high(0.7x), critical(0.3x)
+  - Headers Retry-After dynamiques
+
+### 🔒 Sécurité & Hardening
+
+- **Headers Sécurité**
+  - CSP baseline, X-Frame-Options, X-Content-Type-Options
+  - Referrer-Policy, Permissions-Policy, HSTS (si HTTPS)
+  - Protection XSS et MIME sniffing
+
+- **Protection Brute Force** (TODO)
+  - Rate limiting auth endpoints (30 req/min)
+  - Stockage tentatives par IP dans Redis/cache
+  - Blocage progressif selon configuration
+
+- **Chaos Engineering**
+  - Middleware injection erreurs/latence (staging uniquement)
+  - Configuration probabiliste : error_rate, latency_range, timeout_rate
+  - Commande `chaos:toggle` pour activation/désactivation
+
+### 📊 Tests & Documentation
+
+- **Tests Non-Fonctionnels**
+  - Script k6 `scripts/load/basic.js` avec scénarios représentatifs
+  - Profile baseline `docs/load/profile-baseline.json` exemple
+  - Tests feature flags, health endpoints, queue monitoring
+
+- **Documentation Technique**
+  - Architecture observabilité complète `docs/architecture/observability.md`
+  - Configuration Prometheus/Grafana (TODO placeholders)
+  - Procédures de rotation secrets (TODO)
+
+### Configuration
+
+```bash
+# Observabilité
+OTEL_TRACES_ENABLED=false
+OTEL_TRACES_SAMPLER_RATIO=0.2
+INTERNAL_METRICS_TOKEN=changeme
+
+# Performance  
+DB_SLOW_MS=120
+CACHE_WARM_ENABLED=true
+
+# Résilience
+QUEUE_CRITICAL_MAX=100
+ADAPTIVE_RATE_BASE_USER=120
+
+# Chaos (staging uniquement)
+CHAOS_ENABLED=false
+CHAOS_ERROR_RATE=0.05
+```
+
+### Commandes
+
+```bash
+# Cache & Performance
+php artisan cache:warm
+php artisan db:audit-indexes
+
+# Feature Flags
+php artisan feature:enable key --meta='{"desc":"feature"}'
+php artisan feature:list
+
+# Load Testing
+k6 run scripts/load/basic.js
+
+# Monitoring
+curl -H "Authorization: Bearer token" /internal/metrics
+```
+
+### TODO Extensions Futures
+
+- **OpenTelemetry Complet** : Instrumentation automatique HTTP/DB/Queue
+- **Métriques Business** : Revenue, growth rate, SLI/SLO tracking  
+- **Sécurité Avancée** : Rotation secrets, protection brute force complète
+- **Scaling** : Policies auto-scaling, circuit breakers, load balancer integration
+
+---
+
+## Validation & Prochaines Étapes
+
+```bash
+# Pour valider : php artisan migrate --path=database/migrations/*_create_feature_flags_table.php
+# Pour warm cache : php artisan cache:warm
+# Pour tester : php artisan test --filter=Observability
+# Étape suivante potentielle : Étape 12 (Scaling multi-région, SLO & Burn Rate, Autoscaling policies)
+```
+
 ## License
 
 This project is open-sourced software licensed under the [MIT license](LICENSE).
