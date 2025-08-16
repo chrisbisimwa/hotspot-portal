@@ -1,0 +1,17 @@
+/* Fallback sans-serif stack; ajoutez vos @font-face si vous placez les fichiers WOFF2 ici */
+:root {
+  --font-sans: 'Source Sans Pro', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+}
+body {
+  font-family: var(--font-sans);
+}
+
+/* Exemple d'inclusion si vous ajoutez les fichiers:
+@font-face {
+  font-family: 'Source Sans Pro';
+  font-style: normal;
+  font-weight: 400;
+  src: url('/fonts/SourceSansPro-Regular.woff2') format('woff2');
+  font-display: swap;
+}
+*/

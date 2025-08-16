@@ -15,11 +15,7 @@ class HotspotUser extends Model
 {
     use HasFactory, SoftDeletes;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
+    
     protected $fillable = [
         'username',
         'password',
@@ -31,6 +27,7 @@ class HotspotUser extends Model
         'data_limit_mb',
         'expired_at',
         'last_login_at',
+        'read_at'
     ];
 
     /**
@@ -99,4 +96,10 @@ class HotspotUser extends Model
     {
         return $this->hasMany(HotspotSession::class);
     }
+
+
+    // NOTE: Relation orders() supprimée car aucune colonne hotspot_user_id dans la table orders.
+    // Si un lien commande <-> hotspot user est requis plus tard, ajouter une table pivot ou une clé étrangère adéquate.
+
+    
 }

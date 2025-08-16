@@ -32,15 +32,13 @@ class Dashboard extends Component
                 })
                 ->where('status', PaymentStatus::SUCCESS->value)
                 ->sum('net_amount'),
-            'hotspot_users_active' => HotspotUser::whereHas('order', function ($query) use ($userId) {
-                    $query->where('user_id', $userId);
-                })
+            'hotspot_users_active' => HotspotUser::where('owner_id', $userId)
                 ->where('status', 'active')
                 ->count(),
-            'sessions_active' => HotspotSession::whereHas('hotspotUser.order', function ($query) use ($userId) {
-                    $query->where('user_id', $userId);
+            'sessions_active' => HotspotSession::whereNull('stop_time')
+                ->whereHas('hotspotUser', function ($q) use ($userId) {
+                    $q->where('owner_id', $userId);
                 })
-                ->whereNull('stop_time')
                 ->count(),
             'notifications_unread' => Notification::where('user_id', $userId)
                 ->where('read_at', null)

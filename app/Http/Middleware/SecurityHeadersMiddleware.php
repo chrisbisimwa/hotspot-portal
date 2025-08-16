@@ -50,8 +50,8 @@ class SecurityHeadersMiddleware
     {
         $policies = [
             "default-src 'self'",
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // TODO: tighten for production
-            "style-src 'self' 'unsafe-inline'", // TODO: use nonces for inline styles
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+            "style-src 'self' 'unsafe-inline'",
             "img-src 'self' data: https:",
             "font-src 'self' data:",
             "connect-src 'self'",

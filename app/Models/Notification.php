@@ -29,6 +29,7 @@ class Notification extends Model
         'message',
         'status',
         'sent_at',
+    'read_at',
         'provider_response',
         'meta',
     ];
@@ -42,6 +43,7 @@ class Notification extends Model
     {
         return [
             'sent_at' => 'datetime',
+            'read_at' => 'datetime',
             'provider_response' => 'array',
             'meta' => 'array',
         ];
