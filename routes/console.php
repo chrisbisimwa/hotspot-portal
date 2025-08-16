@@ -42,10 +42,11 @@ Schedule::job(new PruneOldLogsJob())
     ->withoutOverlapping();
 
 // Reporting jobs
-Schedule::job(new SnapshotDailyMetricsJob())
-    ->dailyAt(config('reporting.snapshot_time'))
-    ->withoutOverlapping();
+// TODO: Re-enable after migration is run
+// Schedule::job(new SnapshotDailyMetricsJob())
+//     ->dailyAt(config('reporting.snapshot_time'))
+//     ->withoutOverlapping();
 
-Schedule::job(new PurgeOldExportsJob())
-    ->dailyAt('02:15')
-    ->withoutOverlapping();
+// Schedule::job(new PurgeOldExportsJob())
+//     ->dailyAt('02:15')
+//     ->withoutOverlapping();
