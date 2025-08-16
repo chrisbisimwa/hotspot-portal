@@ -1,8 +1,10 @@
 <?php
 
 use App\Jobs\DispatchPendingNotificationsJob;
+use App\Jobs\PruneOldExportsJob;
 use App\Jobs\PruneOldLogsJob;
 use App\Jobs\ReconcilePaymentsJob;
+use App\Jobs\SnapshotDailyMetricsJob;
 use App\Jobs\SyncActiveSessionsJob;
 use App\Jobs\SyncMikrotikUsersJob;
 use App\Jobs\UpdateExpiredHotspotUsersJob;
@@ -37,4 +39,13 @@ Schedule::job(new DispatchPendingNotificationsJob())
 
 Schedule::job(new PruneOldLogsJob())
     ->cron(config('scheduler.prune_logs_cron'))
+    ->withoutOverlapping();
+
+// Reporting jobs
+Schedule::job(new SnapshotDailyMetricsJob())
+    ->dailyAt(config('reporting.snapshot_time'))
+    ->withoutOverlapping();
+
+Schedule::job(new PurgeOldExportsJob())
+    ->dailyAt('02:15')
     ->withoutOverlapping();

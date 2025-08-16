@@ -46,6 +46,10 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         })->name('interfaces');
     });
 
+    // Export download routes
+    Route::get('/exports/{export}/download', [\App\Http\Controllers\Admin\ExportDownloadController::class, 'download'])
+        ->name('exports.download');
+
     // TODO: Add other admin routes here
     // Route::get('/profiles', [ProfileController::class, 'index'])->name('profiles.index');
     // Route::get('/users', [HotspotUserController::class, 'index'])->name('users.index');
