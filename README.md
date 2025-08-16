@@ -912,6 +912,201 @@ $export = $exportService->requestExport(
 php artisan queue:dispatch "App\Jobs\SnapshotDailyMetricsJob" --arguments="2024-01-01"
 ```
 
+---
+
+## ✅ Étape 10: Alerting & Webhooks & SLA (Completed)
+
+### Système d'Alertes Techniques
+
+The application now includes a comprehensive alerting system with support for multiple channels and automatic incident management.
+
+#### Architecture
+
+```
+app/Domain/Alerting/
+├── Contracts/AlertChannelInterface.php
+├── DTO/AlertMessage.php
+├── Channels/
+│   ├── SlackAlertChannel.php
+│   └── EmailAlertChannel.php
+└── Services/AlertDispatcher.php
+```
+
+#### Alert Channels
+
+- **Slack Channel**: Sends rich formatted alerts to Slack webhooks with severity-based colors
+- **Email Channel**: Sends structured email alerts to operations team
+- **Severity Filtering**: Configurable minimum severity levels per channel
+
+#### Configuration
+
+```php
+// config/alerting.php
+return [
+    'channels' => ['slack', 'email'],
+    'severity_email_min' => 'high',
+    'severity_slack_min' => 'medium',
+    'slack_webhook_url' => env('SLACK_ALERT_WEBHOOK'),
+];
+```
+
+### Webhooks Sortants
+
+Robust webhook system for external integrations with retry logic and signature verification.
+
+#### Supported Events
+
+- `PaymentSucceeded` - Payment completion notifications
+- `HotspotUserProvisioned` - User provisioning events
+- `OrderCompleted` - Order fulfillment updates
+- `ExportCompleted` - Report export completion
+- `IncidentStatusChanged` - Incident lifecycle updates
+
+#### Webhook Features
+
+- **Signature Verification**: HMAC-SHA256 signatures in `X-Hub-Signature-Sha256` header
+- **Retry Logic**: Exponential backoff (1m, 5m, 30m, 2h, 6h) with max 5 attempts
+- **Payload Filtering**: Sensitive data automatically filtered from webhooks
+- **Endpoint Management**: CRUD operations for webhook endpoints via admin UI
+
+#### Configuration
+
+```php
+// config/webhooks.php
+return [
+    'max_retries' => 5,
+    'retry_schedule_minutes' => [1, 5, 30, 120, 360],
+    'timeout_seconds' => 8,
+    'signature_header' => 'X-Hub-Signature-Sha256',
+];
+```
+
+### SLA Metrics & Health Monitoring
+
+#### Tracked Metrics
+
+- `mikrotik.ping_ms` - MikroTik connectivity latency
+- `payment.initiate_latency_ms` - Payment initiation performance
+- `payment.failure_rate` - Payment failure rate monitoring
+- `provisioning.error_rate` - Hotspot provisioning errors
+
+#### Anomaly Detection Rules
+
+- **Payment Failure Rate**: Alert when >40% failures over 10 minutes
+- **MikroTik Unreachable**: Alert after 3 consecutive ping failures >1s
+- **Provisioning Spike**: Alert when >5 partial failures in 15 minutes
+
+#### Health Dashboard
+
+Access via `/admin/health` - provides real-time system health overview:
+
+- MikroTik connectivity status
+- Payment success rates (24h)
+- Provisioning error rates
+- Open incidents count
+- Pending webhook attempts
+
+### Gestion d'Incidents
+
+#### Automatic Incident Creation
+
+- High/Critical severity alerts auto-create incidents
+- Prevents duplicate incidents (30-minute window)
+- Includes alert context and detection source
+
+#### Incident Lifecycle
+
+- **Status Flow**: Open → Monitoring → Mitigated → Resolved/False Positive
+- **Timeline**: All status changes and updates tracked
+- **Metadata**: Rich context from originating alerts
+
+#### Admin Interface
+
+- `/admin/incidents` - List and filter incidents
+- `/admin/incidents/{incident}` - Detailed view with timeline
+- Status updates and manual updates with user attribution
+
+### Commandes Artisan
+
+```bash
+# Retry failed webhook attempts
+php artisan webhooks:retry-failed --limit=50
+
+# Filter by specific endpoint or event
+php artisan webhooks:retry-failed --endpoint=1 --event=PaymentSucceeded
+```
+
+### Environment Variables
+
+```bash
+# Alerting Configuration
+SLACK_ALERT_WEBHOOK=https://hooks.slack.com/services/...
+ALERT_EMAIL_TO=ops@example.com
+ALERT_EMAIL_FROM=alerts@example.com
+ALERT_EMAIL_SUBJECT_PREFIX="[ALERT]"
+
+# Webhook Configuration
+WEBHOOKS_MAX_RETRIES=5
+```
+
+### Testing Alerting & Webhooks
+
+```bash
+# Test all alerting components
+php artisan test --filter=Alerting
+
+# Test webhook system
+php artisan test --filter=Webhook
+
+# Test incident management
+php artisan test --filter=Incident
+```
+
+### Database Schema
+
+```sql
+-- Incidents tracking
+CREATE TABLE incidents (
+    id BIGINT PRIMARY KEY,
+    title VARCHAR(255),
+    slug VARCHAR(255) UNIQUE,
+    status VARCHAR(30) INDEX,
+    severity VARCHAR(20) INDEX,
+    started_at TIMESTAMP,
+    detection_source VARCHAR(255),
+    meta JSON
+);
+
+-- Webhook endpoints configuration
+CREATE TABLE webhook_endpoints (
+    id BIGINT PRIMARY KEY,
+    name VARCHAR(255),
+    url VARCHAR(255),
+    secret VARCHAR(255),
+    is_active BOOLEAN DEFAULT true,
+    event_types JSON,
+    failure_count INTEGER DEFAULT 0
+);
+
+-- SLA metrics storage
+CREATE TABLE sla_metrics (
+    id BIGINT PRIMARY KEY,
+    metric_key VARCHAR(255) INDEX,
+    value DOUBLE,
+    captured_at TIMESTAMP INDEX,
+    meta JSON
+);
+```
+
+### TODO / Extensions futures
+
+- **Intégration PagerDuty/OpsGenie**: Escalation automatique des incidents critiques
+- **OpenTelemetry**: Traces distribuées pour l'observabilité
+- **Dashboard temps réel**: WebSockets pour les mises à jour live
+- **Analytics avancées**: Tendances et prédictions basées sur les métriques SLA
+
+---
+
 ## License
 
 This project is open-sourced software licensed under the [MIT license](LICENSE).

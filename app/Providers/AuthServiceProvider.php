@@ -28,6 +28,8 @@ class AuthServiceProvider extends ServiceProvider
         Payment::class => PaymentPolicy::class,
         HotspotUser::class => HotspotUserPolicy::class,
         Notification::class => NotificationPolicy::class,
+        \App\Models\Incident::class => \App\Policies\IncidentPolicy::class,
+        \App\Models\WebhookEndpoint::class => \App\Policies\WebhookEndpointPolicy::class,
     ];
 
     /**
@@ -42,6 +44,11 @@ class AuthServiceProvider extends ServiceProvider
 
         // Metrics access gate  
         Gate::define('view-metrics', [MetricsPolicy::class, 'view']);
+
+        // Alerting management gate
+        Gate::define('manage-alerting', function ($user) {
+            return $user->hasRole('admin');
+        });
 
         // Admin bypass for all policies
         Gate::before(function ($user, $ability) {
