@@ -90,7 +90,7 @@ class CacheWarmCommand extends Command
             ->take($batchSize)
             ->get();
 
-        Cache::tags(['user_profiles'])->put($cacheKey, $activeProfiles, $ttl);
+        Cache::put($cacheKey, $activeProfiles, $ttl);
         
         $this->info("Cached {$activeProfiles->count()} active user profiles");
         return 1;
@@ -116,7 +116,7 @@ class CacheWarmCommand extends Command
         // Check if FeatureFlag model exists (will be created)
         if (class_exists(\App\Models\FeatureFlag::class)) {
             $flags = FeatureFlag::all()->keyBy('key');
-            Cache::tags(['feature_flags'])->put($cacheKey, $flags, $ttl);
+            Cache::put($cacheKey, $flags, $ttl);
             $this->info("Cached {$flags->count()} feature flags");
             return 1;
         }
@@ -143,7 +143,7 @@ class CacheWarmCommand extends Command
         }
 
         $metrics = $metricsService->global();
-        Cache::tags(['metrics'])->put($cacheKey, $metrics, $ttl);
+        Cache::put($cacheKey, $metrics, $ttl);
         
         $this->info('Cached global metrics');
         return 1;
@@ -168,7 +168,7 @@ class CacheWarmCommand extends Command
 
         // Placeholder for registry reports caching
         $reports = ['placeholder' => 'registry_reports_will_be_implemented'];
-        Cache::tags(['exports'])->put($cacheKey, $reports, $ttl);
+        Cache::put($cacheKey, $reports, $ttl);
         
         $this->info('Cached registry reports summary');
         return 1;

@@ -95,7 +95,7 @@ class StructuredLog
         foreach ($data as $key => $value) {
             if (is_array($value)) {
                 $filtered[$key] = self::recursiveFilter($value);
-            } elseif (self::isSensitiveKey($key)) {
+            } elseif (is_string($key) && self::isSensitiveKey($key)) {
                 $filtered[$key] = '[REDACTED]';
             } else {
                 $filtered[$key] = $value;

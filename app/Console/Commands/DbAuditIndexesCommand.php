@@ -24,7 +24,10 @@ class DbAuditIndexesCommand extends Command
         
         try {
             if ($table) {
-                $suggestions = $this->auditTable($table);
+                $tableSuggestions = $this->auditTable($table);
+                if (!empty($tableSuggestions)) {
+                    $suggestions[$table] = $tableSuggestions;
+                }
             } else {
                 $suggestions = $this->auditAllTables();
             }
