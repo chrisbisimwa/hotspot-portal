@@ -10,7 +10,7 @@ Route::get('/', function () {
 })->name('home');
 
 // User dashboard (authenticated users)
-Route::view('dashboard', 'dashboard')
+Route::get('dashboard', \App\Livewire\User\Dashboard::class)
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
@@ -25,11 +25,8 @@ Route::middleware(['auth'])->group(function () {
 
 // Admin routes (protected by auth + role:admin middleware)
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
-    // Admin dashboard placeholder
-    Route::get('/dashboard', function () {
-        // TODO: Implement admin dashboard with Livewire component
-        return view('admin.dashboard'); // Placeholder
-    })->name('dashboard');
+    // Admin dashboard
+    Route::get('/dashboard', \App\Livewire\Admin\Dashboard::class)->name('dashboard');
 
     // Monitoring endpoints
     Route::prefix('monitoring')->name('monitoring.')->group(function () {
