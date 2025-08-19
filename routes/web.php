@@ -66,11 +66,9 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     // Route::get('/logs', [LogController::class, 'index'])->name('logs.index');
     // Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
 
-    Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
 
     Route::get('/orders', \App\Livewire\Admin\Orders\ListOrders::class)->name('admin.orders');
     
-});
 });
 
 // Authentication routes
