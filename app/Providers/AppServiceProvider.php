@@ -128,5 +128,9 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(QueryExecuted::class, SlowQueryListener::class);
 
         UserProfile::observe(UserProfileObserver::class);
+
+        
+        $this->app->register(\RouterOS\Laravel\ServiceProvider::class);
+        
     }
 }

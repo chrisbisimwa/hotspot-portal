@@ -11,6 +11,9 @@ use App\Jobs\UpdateExpiredHotspotUsersJob;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
+use App\Jobs\SnapshotHighFreqMetricsJob;
+use App\Jobs\PruneOldTimeseriesMetricsJob;
+
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
@@ -39,6 +42,14 @@ Schedule::job(new DispatchPendingNotificationsJob())
 
 Schedule::job(new PruneOldLogsJob())
     ->cron(config('scheduler.prune_logs_cron'))
+    ->withoutOverlapping();
+
+Schedule::job(new SnapshotHighFreqMetricsJob())
+    ->cron(config('monitoring_timeseries.snapshot_cron'))
+    ->withoutOverlapping();
+
+Schedule::job(new PruneOldTimeseriesMetricsJob())
+    ->cron(config('monitoring_timeseries.prune_cron'))
     ->withoutOverlapping();
 
 // Reporting jobs

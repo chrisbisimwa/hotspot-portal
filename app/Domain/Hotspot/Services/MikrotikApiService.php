@@ -7,50 +7,117 @@ namespace App\Domain\Hotspot\Services;
 use App\Domain\Hotspot\Contracts\MikrotikApiInterface;
 use App\Domain\Hotspot\DTO\HotspotUserProvisionData;
 use App\Domain\Hotspot\DTO\MikrotikUserResult;
+use App\Domain\Hotspot\DTO\MikrotikProfileProvisionData;
 use App\Domain\Hotspot\Exceptions\MikrotikApiException;
-use EvilFreelancer\RouterOSAPI\Client;
-use EvilFreelancer\RouterOSAPI\Config;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use App\Domain\Hotspot\DTO\MikrotikProfileProvisionData;
 
+/**
+ * Service d’intégration MikroTik (RouterOS API).
+ *
+ * Implémente toutes les méthodes exigées par MikrotikApiInterface.
+ * Gère deux namespaces possibles selon la version du package :
+ *  - RouterOS\{Client, Config}
+ *  - EvilFreelancer\RouterOSAPI\{Client, Config}
+ *
+ * En mode "fake" (config('mikrotik.fake') = true ou enabled = false), retourne des données simulées.
+ */
 class MikrotikApiService implements MikrotikApiInterface
 {
-    private ?Client $client = null;
+    /** @var object|null */
+    private ?object $client = null;
+
+    /** @var array<string,mixed> */
     private array $config;
+
+    private ?string $configClass = null;
+    private ?string $clientClass = null;
 
     public function __construct()
     {
-        $this->config = config('mikrotik');
+        $this->config = config('mikrotik', []);
+        $this->resolveClasses();
+    }
+
+    /**
+     * Détection dynamique des classes disponibles.
+     */
+    private function resolveClasses(): void
+    {
+        $candidates = [
+            ['config' => 'RouterOS\\Config', 'client' => 'RouterOS\\Client'],
+            ['config' => 'EvilFreelancer\\RouterOSAPI\\Config', 'client' => 'EvilFreelancer\\RouterOSAPI\\Client'],
+        ];
+
+        foreach ($candidates as $pair) {
+            if (class_exists($pair['config']) && class_exists($pair['client'])) {
+                $this->configClass = $pair['config'];
+                $this->clientClass = $pair['client'];
+                return;
+            }
+        }
     }
 
     public function connect(): void
     {
+        if ($this->isFakeMode()) {
+            Log::info('Mikrotik: Fake mode activé - aucune connexion');
+            return;
+        }
+
+        if (!$this->configClass || !$this->clientClass) {
+            throw new MikrotikApiException(
+                'Package RouterOS API introuvable. Installe-le (ex: composer require evilfreelancer/routeros-api-php) puis dump-autoload.'
+            );
+        }
+
+        if ($this->client !== null) {
+            return; // Déjà connecté
+        }
+
         try {
-            if ($this->isFakeMode()) {
-                Log::info('Mikrotik: Using fake mode - skipping real connection');
-                return;
-            }
+            $cfgArray = [
+                'host' => $this->config['host'] ?? '127.0.0.1',
+                'user' => $this->config['username'] ?? 'admin',
+                'pass' => $this->config['password'] ?? '',
+                'port' => (int)($this->config['port'] ?? 8728),
+                'ssl' => (bool)($this->config['use_ssl'] ?? false),
+                'timeout' => (int)($this->config['timeout'] ?? 10),
+            ];
 
-            $config = new Config([
-                'host' => $this->config['host'],
-                'user' => $this->config['username'],
-                'pass' => $this->config['password'],
-                'port' => (int) $this->config['port'],
-                'ssl' => (bool) $this->config['use_ssl'],
-                'timeout' => $this->config['timeout'],
-            ]);
+            $configObj = new ($this->configClass)($cfgArray);
+            $this->client = new ($this->clientClass)($configObj);
 
-            $this->client = new Client($config);
-            Log::info('Mikrotik: Successfully connected to RouterOS', [
-                'host' => $this->config['host'],
-                'port' => $this->config['port']
+            Log::info('Mikrotik: Connexion réussie', [
+                'host' => $cfgArray['host'],
+                'port' => $cfgArray['port'],
+                'ns'   => $this->clientClass,
             ]);
-        } catch (\Exception $e) {
-            Log::error('Mikrotik: Connection failed', ['exception' => $e->getMessage()]);
-            throw new MikrotikApiException('Failed to connect to Mikrotik: ' . $e->getMessage());
+        } catch (\Throwable $e) {
+            $this->client = null;
+            Log::error('Mikrotik: Connexion échouée', ['error' => $e->getMessage()]);
+            throw new MikrotikApiException('Failed to connect to Mikrotik: ' . $e->getMessage(), 0, $e);
         }
     }
+
+    private function ensureConnected(): void
+    {
+        if ($this->isFakeMode()) {
+            return;
+        }
+        if (!$this->client) {
+            $this->connect();
+        }
+    }
+
+    private function isFakeMode(): bool
+    {
+        return !($this->config['enabled'] ?? true) || ($this->config['fake'] ?? false);
+    }
+
+    /* -------------------------------------------------
+     * USERS
+     * ------------------------------------------------- */
 
     public function createUser(HotspotUserProvisionData $data): MikrotikUserResult
     {
@@ -58,21 +125,20 @@ class MikrotikApiService implements MikrotikApiInterface
             if ($this->isFakeMode()) {
                 return $this->createUserFake($data);
             }
-
             $this->ensureConnected();
-            
+
             $response = $this->client->query('/ip/hotspot/user/add', [
-                'name' => $data->username,
-                'password' => $data->password,
-                'profile' => $data->profileName,
-                'limit-uptime' => $data->validityMinutes . 'm',
+                'name'        => $data->username,
+                'password'    => $data->password,
+                'profile'     => $data->profileName,
+                'limit-uptime'=> $data->validityMinutes . 'm',
             ]);
 
             $mikrotikId = $response[0]['.id'] ?? null;
 
-            Log::info('Mikrotik: User created successfully', [
-                'username' => $data->username,
-                'mikrotik_id' => $mikrotikId
+            Log::info('Mikrotik: Utilisateur créé', [
+                'username'   => $data->username,
+                'mikrotik_id'=> $mikrotikId
             ]);
 
             return new MikrotikUserResult(
@@ -80,12 +146,13 @@ class MikrotikApiService implements MikrotikApiInterface
                 mikrotik_id: $mikrotikId,
                 raw: $response
             );
-        } catch (\Exception $e) {
-            Log::error('Mikrotik: Failed to create user', [
+
+        } catch (\Throwable $e) {
+            Log::error('Mikrotik: Échec création utilisateur', [
                 'username' => $data->username,
-                'exception' => $e->getMessage()
+                'error'    => $e->getMessage()
             ]);
-            throw new MikrotikApiException('Failed to create user: ' . $e->getMessage());
+            throw new MikrotikApiException('Failed to create user: ' . $e->getMessage(), 0, $e);
         }
     }
 
@@ -93,28 +160,28 @@ class MikrotikApiService implements MikrotikApiInterface
     {
         try {
             if ($this->isFakeMode()) {
-                Log::info('Mikrotik: Fake mode - removing user', ['username' => $username]);
                 return true;
             }
-
             $this->ensureConnected();
-            
-            $users = $this->client->query('/ip/hotspot/user/print', ['?name' => $username]);
-            
-            if (empty($users)) {
+
+            $id = $this->findUserId($username);
+            if (!$id) {
+                Log::warning('Mikrotik: removeUser - utilisateur introuvable', ['username' => $username]);
                 return false;
             }
 
-            $this->client->query('/ip/hotspot/user/remove', ['numbers' => $users[0]['.id']]);
-            
-            Log::info('Mikrotik: User removed successfully', ['username' => $username]);
-            return true;
-        } catch (\Exception $e) {
-            Log::error('Mikrotik: Failed to remove user', [
-                'username' => $username,
-                'exception' => $e->getMessage()
+            $this->client->query('/ip/hotspot/user/remove', [
+                '.id' => $id,
             ]);
-            throw new MikrotikApiException('Failed to remove user: ' . $e->getMessage());
+
+            Log::info('Mikrotik: Utilisateur supprimé', ['username' => $username, 'id' => $id]);
+            return true;
+        } catch (\Throwable $e) {
+            Log::error('Mikrotik: Échec removeUser', [
+                'username' => $username,
+                'error'    => $e->getMessage()
+            ]);
+            throw new MikrotikApiException('Failed to remove user: ' . $e->getMessage(), 0, $e);
         }
     }
 
@@ -122,18 +189,17 @@ class MikrotikApiService implements MikrotikApiInterface
     {
         try {
             if ($this->isFakeMode()) {
-                return $this->getUsersFake();
+                return [
+                    ['name' => 'demo1', 'profile' => 'basic', 'disabled' => 'false'],
+                    ['name' => 'demo2', 'profile' => 'premium', 'disabled' => 'true'],
+                ];
             }
-
             $this->ensureConnected();
-            
-            $users = $this->client->query('/ip/hotspot/user/print');
-            
-            Log::info('Mikrotik: Retrieved users list', ['count' => count($users)]);
-            return $users;
-        } catch (\Exception $e) {
-            Log::error('Mikrotik: Failed to get users', ['exception' => $e->getMessage()]);
-            throw new MikrotikApiException('Failed to get users: ' . $e->getMessage());
+
+            return $this->client->query('/ip/hotspot/user/print');
+        } catch (\Throwable $e) {
+            Log::error('Mikrotik: Échec getUsers', ['error' => $e->getMessage()]);
+            return [];
         }
     }
 
@@ -141,18 +207,16 @@ class MikrotikApiService implements MikrotikApiInterface
     {
         try {
             if ($this->isFakeMode()) {
-                return $this->getActiveSessionsFake();
+                return [
+                    ['user' => 'demo1', 'address' => '192.168.88.101', 'uptime' => '5m', 'idle-time' => '1m'],
+                    ['user' => 'demo2', 'address' => '192.168.88.102', 'uptime' => '12m', 'idle-time' => '30s'],
+                ];
             }
-
             $this->ensureConnected();
-            
-            $sessions = $this->client->query('/ip/hotspot/active/print');
-            
-            Log::info('Mikrotik: Retrieved active sessions', ['count' => count($sessions)]);
-            return $sessions;
-        } catch (\Exception $e) {
-            Log::error('Mikrotik: Failed to get active sessions', ['exception' => $e->getMessage()]);
-            throw new MikrotikApiException('Failed to get active sessions: ' . $e->getMessage());
+            return $this->client->query('/ip/hotspot/active/print');
+        } catch (\Throwable $e) {
+            Log::error('Mikrotik: Échec getActiveSessions', ['error' => $e->getMessage()]);
+            return [];
         }
     }
 
@@ -160,28 +224,33 @@ class MikrotikApiService implements MikrotikApiInterface
     {
         try {
             if ($this->isFakeMode()) {
-                Log::info('Mikrotik: Fake mode - disconnecting user', ['username' => $username]);
                 return true;
             }
-
             $this->ensureConnected();
-            
-            $sessions = $this->client->query('/ip/hotspot/active/print', ['?user' => $username]);
-            
-            if (empty($sessions)) {
+
+            // Trouver la session active
+            $activeList = $this->client->query('/ip/hotspot/active/print', [
+                '?user' => $username,
+            ]);
+
+            $id = $activeList[0]['.id'] ?? null;
+            if (!$id) {
+                Log::warning('Mikrotik: disconnectUser - session non trouvée', ['username' => $username]);
                 return false;
             }
 
-            $this->client->query('/ip/hotspot/active/remove', ['numbers' => $sessions[0]['.id']]);
-            
-            Log::info('Mikrotik: User disconnected successfully', ['username' => $username]);
-            return true;
-        } catch (\Exception $e) {
-            Log::error('Mikrotik: Failed to disconnect user', [
-                'username' => $username,
-                'exception' => $e->getMessage()
+            $this->client->query('/ip/hotspot/active/remove', [
+                '.id' => $id,
             ]);
-            throw new MikrotikApiException('Failed to disconnect user: ' . $e->getMessage());
+
+            Log::info('Mikrotik: Session déconnectée', ['username' => $username, 'active_id' => $id]);
+            return true;
+        } catch (\Throwable $e) {
+            Log::error('Mikrotik: Échec disconnectUser', [
+                'username' => $username,
+                'error'    => $e->getMessage()
+            ]);
+            return false;
         }
     }
 
@@ -189,31 +258,28 @@ class MikrotikApiService implements MikrotikApiInterface
     {
         try {
             if ($this->isFakeMode()) {
-                Log::info('Mikrotik: Fake mode - suspending user', ['username' => $username]);
                 return true;
             }
-
             $this->ensureConnected();
-            
-            $users = $this->client->query('/ip/hotspot/user/print', ['?name' => $username]);
-            
-            if (empty($users)) {
+
+            $id = $this->findUserId($username);
+            if (!$id) {
                 return false;
             }
 
             $this->client->query('/ip/hotspot/user/set', [
-                'numbers' => $users[0]['.id'],
-                'disabled' => 'yes'
+                '.id'      => $id,
+                'disabled' => 'yes',
             ]);
-            
-            Log::info('Mikrotik: User suspended successfully', ['username' => $username]);
+
+            Log::info('Mikrotik: Utilisateur suspendu', ['username' => $username]);
             return true;
-        } catch (\Exception $e) {
-            Log::error('Mikrotik: Failed to suspend user', [
+        } catch (\Throwable $e) {
+            Log::error('Mikrotik: Échec suspendUser', [
                 'username' => $username,
-                'exception' => $e->getMessage()
+                'error'    => $e->getMessage()
             ]);
-            throw new MikrotikApiException('Failed to suspend user: ' . $e->getMessage());
+            return false;
         }
     }
 
@@ -221,202 +287,72 @@ class MikrotikApiService implements MikrotikApiInterface
     {
         try {
             if ($this->isFakeMode()) {
-                Log::info('Mikrotik: Fake mode - resuming user', ['username' => $username]);
                 return true;
             }
-
             $this->ensureConnected();
-            
-            $users = $this->client->query('/ip/hotspot/user/print', ['?name' => $username]);
-            
-            if (empty($users)) {
+
+            $id = $this->findUserId($username);
+            if (!$id) {
                 return false;
             }
 
             $this->client->query('/ip/hotspot/user/set', [
-                'numbers' => $users[0]['.id'],
-                'disabled' => 'no'
+                '.id'      => $id,
+                'disabled' => 'no',
             ]);
-            
-            Log::info('Mikrotik: User resumed successfully', ['username' => $username]);
+
+            Log::info('Mikrotik: Utilisateur réactivé', ['username' => $username]);
             return true;
-        } catch (\Exception $e) {
-            Log::error('Mikrotik: Failed to resume user', [
+        } catch (\Throwable $e) {
+            Log::error('Mikrotik: Échec resumeUser', [
                 'username' => $username,
-                'exception' => $e->getMessage()
+                'error'    => $e->getMessage()
             ]);
-            throw new MikrotikApiException('Failed to resume user: ' . $e->getMessage());
-        }
-    }
-
-    public function getApInterfacesLoad(): array
-    {
-        try {
-            if ($this->isFakeMode()) {
-                return $this->getApInterfacesLoadFake();
-            }
-
-            $this->ensureConnected();
-            
-            $interfaces = $this->client->query('/interface/print');
-            $activeSessions = $this->getActiveSessions();
-            
-            $result = [];
-            foreach ($interfaces as $interface) {
-                $connectedUsers = count(array_filter($activeSessions, function ($session) use ($interface) {
-                    return ($session['server'] ?? '') === ($interface['name'] ?? '');
-                }));
-                
-                $result[] = [
-                    'interface' => $interface['name'] ?? 'unknown',
-                    'connected_users' => $connectedUsers,
-                    'last_sync_at' => now()->toISOString(),
-                ];
-            }
-            
-            Log::info('Mikrotik: Retrieved AP interfaces load', ['interfaces_count' => count($result)]);
-            return $result;
-        } catch (\Exception $e) {
-            Log::error('Mikrotik: Failed to get AP interfaces load', ['exception' => $e->getMessage()]);
-            throw new MikrotikApiException('Failed to get AP interfaces load: ' . $e->getMessage());
-        }
-    }
-
-    public function ping(): bool
-    {
-        try {
-            if ($this->isFakeMode()) {
-                Log::info('Mikrotik: Fake mode - ping successful');
-                return true;
-            }
-
-            $this->ensureConnected();
-            
-            // Simple test query to check if connection is alive
-            $this->client->query('/system/identity/print');
-            
-            Log::info('Mikrotik: Ping successful');
-            return true;
-        } catch (\Exception $e) {
-            Log::warning('Mikrotik: Ping failed', ['exception' => $e->getMessage()]);
             return false;
         }
     }
 
-    private function isFakeMode(): bool
-    {
-        return $this->config['fake'] || $this->config['host'] === 'demo';
-    }
+    /* -------------------------------------------------
+     * PROFILES
+     * ------------------------------------------------- */
 
-    private function ensureConnected(): void
-    {
-        if ($this->client === null) {
-            $this->connect();
-        }
-    }
-
-    private function createUserFake(HotspotUserProvisionData $data): MikrotikUserResult
-    {
-        $mikrotikId = '*' . strtoupper(Str::random(8));
-        
-        Log::info('Mikrotik: Fake mode - user created', [
-            'username' => $data->username,
-            'mikrotik_id' => $mikrotikId
-        ]);
-
-        return new MikrotikUserResult(
-            username: $data->username,
-            mikrotik_id: $mikrotikId,
-            raw: [
-                '.id' => $mikrotikId,
-                'name' => $data->username,
-                'profile' => $data->profileName,
-                'limit-uptime' => $data->validityMinutes . 'm',
-                'fake_mode' => true,
-            ]
-        );
-    }
-
-    private function getUsersFake(): array
-    {
-        return [
-            [
-                '.id' => '*1001',
-                'name' => 'demo-user-1',
-                'profile' => 'default',
-                'disabled' => 'false',
-                'fake_mode' => true,
-            ],
-            [
-                '.id' => '*1002',
-                'name' => 'demo-user-2',
-                'profile' => 'premium',
-                'disabled' => 'false',
-                'fake_mode' => true,
-            ]
-        ];
-    }
-
-    private function getActiveSessionsFake(): array
-    {
-        return [
-            [
-                '.id' => '*2001',
-                'user' => 'demo-user-1',
-                'address' => '192.168.1.100',
-                'mac-address' => '00:11:22:33:44:55',
-                'server' => 'hotspot1',
-                'uptime' => '00:05:30',
-                'fake_mode' => true,
-            ]
-        ];
-    }
-
-    private function getApInterfacesLoadFake(): array
-    {
-        return [
-            [
-                'interface' => 'wlan1',
-                'connected_users' => 5,
-                'last_sync_at' => now()->toISOString(),
-            ],
-            [
-                'interface' => 'wlan2',
-                'connected_users' => 12,
-                'last_sync_at' => now()->toISOString(),
-            ],
-            [
-                'interface' => 'ether1',
-                'connected_users' => 3,
-                'last_sync_at' => now()->toISOString(),
-            ]
-        ];
-    }
-
-    public function __destruct()
-    {
-        // TODO: Add proper connection cleanup if needed by the RouterOS API client
-        $this->client = null;
-    }
-
-
-     public function createUserProfile(MikrotikProfileProvisionData $data): bool
+    public function createUserProfile(MikrotikProfileProvisionData $data): bool
     {
         try {
             if ($this->isFakeMode()) {
-                Log::info('Mikrotik (fake): create profile', ['name' => $data->name]);
                 return true;
             }
             $this->ensureConnected();
-            $this->client->query('/ip/hotspot/user/profile/add', $data->toPayload());
-            Log::info('Mikrotik: profile created', ['name' => $data->name]);
+
+            // Vérifie si existe
+            $existing = $this->client->query('/ip/hotspot/user/profile/print', [
+                '?name' => $data->profileName,
+            ]);
+
+            if (!empty($existing)) {
+                Log::info('Mikrotik: Profile déjà présent', ['profile' => $data->profileName]);
+                return true;
+            }
+
+            $payload = [
+                'name'        => $data->profileName,
+                'rate-limit'  => $data->rateLimit,
+                'shared-users'=> $data->sharedUsers,
+            ];
+            if ($data->sessionTimeoutMinutes) {
+                $payload['session-timeout'] = $data->sessionTimeoutMinutes . 'm';
+            }
+
+            $this->client->query('/ip/hotspot/user/profile/add', $payload);
+
+            Log::info('Mikrotik: Profile créé', ['profile' => $data->profileName]);
             return true;
         } catch (\Throwable $e) {
-            Log::error('Mikrotik: create profile failed', [
-                'name' => $data->name,
-                'error' => $e->getMessage()
+            Log::error('Mikrotik: Échec createUserProfile', [
+                'profile' => $data->profileName,
+                'error'   => $e->getMessage()
             ]);
-            throw new MikrotikApiException('Create profile failed: '.$e->getMessage());
+            return false;
         }
     }
 
@@ -424,32 +360,35 @@ class MikrotikApiService implements MikrotikApiInterface
     {
         try {
             if ($this->isFakeMode()) {
-                Log::info('Mikrotik (fake): update profile', ['name' => $name]);
                 return true;
             }
             $this->ensureConnected();
-            $profiles = $this->client->query('/ip/hotspot/user/profile/print', ['?name' => $name]);
-            if (empty($profiles)) {
-                Log::warning('Mikrotik: profile not found for update', ['name' => $name]);
-                // Option : créer si absent
-                $this->client->query('/ip/hotspot/user/profile/add', $data->toPayload());
-                return true;
+
+            $id = $this->findProfileId($name);
+            if (!$id) {
+                Log::warning('Mikrotik: updateUserProfile - profile introuvable', ['profile' => $name]);
+                return false;
             }
-            $id = $profiles[0]['.id'];
-            $payload = $data->toPayload();
-            unset($payload['name']); // On ne renomme pas ici
-            if (count($payload) > 0) {
-                $payload['.id'] = $id;
-                $this->client->query('/ip/hotspot/user/profile/set', $payload);
+
+            $payload = [
+                '.id'         => $id,
+                'rate-limit'  => $data->rateLimit,
+                'shared-users'=> $data->sharedUsers,
+            ];
+            if ($data->sessionTimeoutMinutes) {
+                $payload['session-timeout'] = $data->sessionTimeoutMinutes . 'm';
             }
-            Log::info('Mikrotik: profile updated', ['name' => $name]);
+
+            $this->client->query('/ip/hotspot/user/profile/set', $payload);
+
+            Log::info('Mikrotik: Profile mis à jour', ['profile' => $name]);
             return true;
         } catch (\Throwable $e) {
-            Log::error('Mikrotik: update profile failed', [
-                'name' => $name,
-                'error' => $e->getMessage()
+            Log::error('Mikrotik: Échec updateUserProfile', [
+                'profile' => $name,
+                'error'   => $e->getMessage()
             ]);
-            throw new MikrotikApiException('Update profile failed: '.$e->getMessage());
+            return false;
         }
     }
 
@@ -457,25 +396,27 @@ class MikrotikApiService implements MikrotikApiInterface
     {
         try {
             if ($this->isFakeMode()) {
-                Log::info('Mikrotik (fake): remove profile', ['name' => $name]);
                 return true;
             }
             $this->ensureConnected();
-            $profiles = $this->client->query('/ip/hotspot/user/profile/print', ['?name' => $name]);
-            if (empty($profiles)) {
+
+            $id = $this->findProfileId($name);
+            if (!$id) {
                 return false;
             }
+
             $this->client->query('/ip/hotspot/user/profile/remove', [
-                'numbers' => $profiles[0]['.id'],
+                '.id' => $id,
             ]);
-            Log::info('Mikrotik: profile removed', ['name' => $name]);
+
+            Log::info('Mikrotik: Profile supprimé', ['profile' => $name]);
             return true;
         } catch (\Throwable $e) {
-            Log::error('Mikrotik: remove profile failed', [
-                'name' => $name,
-                'error' => $e->getMessage()
+            Log::error('Mikrotik: Échec removeUserProfile', [
+                'profile' => $name,
+                'error'   => $e->getMessage()
             ]);
-            throw new MikrotikApiException('Remove profile failed: '.$e->getMessage());
+            return false;
         }
     }
 
@@ -484,15 +425,107 @@ class MikrotikApiService implements MikrotikApiInterface
         try {
             if ($this->isFakeMode()) {
                 return [
-                    ['name' => 'BASIC', 'rate-limit' => '2M/2M', 'shared-users' => '1'],
-                    ['name' => 'PREMIUM', 'rate-limit' => '10M/10M', 'shared-users' => '1'],
+                    ['name' => 'basic', 'rate-limit' => '2M/2M', 'shared-users' => '1'],
+                    ['name' => 'premium', 'rate-limit' => '10M/10M', 'shared-users' => '3'],
                 ];
             }
             $this->ensureConnected();
+
             return $this->client->query('/ip/hotspot/user/profile/print');
         } catch (\Throwable $e) {
-            Log::error('Mikrotik: get profiles failed', ['error' => $e->getMessage()]);
-            throw new MikrotikApiException('Get profiles failed: '.$e->getMessage());
+            Log::error('Mikrotik: Échec getUserProfiles', ['error' => $e->getMessage()]);
+            return [];
         }
+    }
+
+    /* -------------------------------------------------
+     * INTERFACES
+     * ------------------------------------------------- */
+
+    public function getApInterfacesLoad(): array
+    {
+        try {
+            if ($this->isFakeMode()) {
+                return [
+                    ['name' => 'ether1', 'rx-kbps' => 1200, 'tx-kbps' => 800, 'fake' => true],
+                    ['name' => 'wlan1',  'rx-kbps' => 560,  'tx-kbps' => 430, 'fake' => true],
+                ];
+            }
+            $this->ensureConnected();
+
+            $interfaces = $this->client->query('/interface/print');
+
+            // NOTE: Pour des stats traffic précises, il faudrait utiliser monitor-traffic (souvent en mode continu).
+            return array_map(static function ($iface) {
+                return [
+                    'name'     => $iface['name'] ?? null,
+                    'type'     => $iface['type'] ?? null,
+                    'running'  => $iface['running'] ?? null,
+                    'rx-kbps'  => null,
+                    'tx-kbps'  => null,
+                ];
+            }, $interfaces);
+        } catch (\Throwable $e) {
+            Log::error('Mikrotik: Échec getApInterfacesLoad', ['error' => $e->getMessage()]);
+            return [
+                'error' => true,
+                'message' => $e->getMessage(),
+            ];
+        }
+    }
+
+    /* -------------------------------------------------
+     * HEALTH / PING
+     * ------------------------------------------------- */
+
+    public function ping(): bool
+    {
+        try {
+            if ($this->isFakeMode()) {
+                return true;
+            }
+            $this->ensureConnected();
+
+            $target = $this->config['host'] ?? '127.0.0.1';
+            $response = $this->client->query('/ping', [
+                'address' => $target,
+                'count'   => 1,
+            ]);
+
+            // Selon version, peut contenir 'time' ou juste status
+            return !empty($response);
+        } catch (\Throwable $e) {
+            Log::warning('Mikrotik: Ping échoué', ['error' => $e->getMessage()]);
+            return false;
+        }
+    }
+
+    /* -------------------------------------------------
+     * Helpers privés
+     * ------------------------------------------------- */
+
+    private function findUserId(string $username): ?string
+    {
+        $users = $this->client->query('/ip/hotspot/user/print', [
+            '?name' => $username,
+        ]);
+        return $users[0]['.id'] ?? null;
+    }
+
+    private function findProfileId(string $profileName): ?string
+    {
+        $profiles = $this->client->query('/ip/hotspot/user/profile/print', [
+            '?name' => $profileName,
+        ]);
+        return $profiles[0]['.id'] ?? null;
+    }
+
+    private function createUserFake(HotspotUserProvisionData $data): MikrotikUserResult
+    {
+        return new MikrotikUserResult(
+            username: $data->username,
+            mikrotik_id: 'FAKE-' . Str::random(6),
+            raw: ['fake' => true]
+        );
     }
 }

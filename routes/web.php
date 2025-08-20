@@ -93,6 +93,10 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/notifications/{notification}', \App\Livewire\Admin\Notifications\ShowNotification::class)->name('notifications.show');
     Route::get('/notifications/{notification}/edit', \App\Livewire\Admin\Notifications\EditNotification::class)->name('notifications.edit');
 
+    Route::get('/monitoring', \App\Livewire\Admin\Monitoring\MonitoringCenter::class)->name('monitoring.center');
+    Route::get('/monitoring/data/timeseries', [\App\Http\Controllers\Admin\MonitoringDataController::class, 'timeseries'])->name('monitoring.timeseries');
+    Route::get('/monitoring/data/interfaces', [\App\Http\Controllers\Admin\MonitoringDataController::class, 'interfaces'])->name('monitoring.interfaces');
+
 });
 
 // Authentication routes

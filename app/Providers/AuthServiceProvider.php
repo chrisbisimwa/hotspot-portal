@@ -56,5 +56,9 @@ class AuthServiceProvider extends ServiceProvider
                 return true;
             }
         });
+
+        Gate::define('viewAdminMonitoring', function ($user) {
+            return $user?->hasRole('admin');
+        });
     }
 }
