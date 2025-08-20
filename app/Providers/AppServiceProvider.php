@@ -21,6 +21,8 @@ use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
+use App\Models\UserProfile;
+use App\Observers\UserProfileObserver;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -124,5 +126,7 @@ class AppServiceProvider extends ServiceProvider
 
         // Register slow query listener
         Event::listen(QueryExecuted::class, SlowQueryListener::class);
+
+        UserProfile::observe(UserProfileObserver::class);
     }
 }

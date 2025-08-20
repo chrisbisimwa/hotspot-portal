@@ -6,6 +6,7 @@ namespace App\Domain\Hotspot\Contracts;
 
 use App\Domain\Hotspot\DTO\HotspotUserProvisionData;
 use App\Domain\Hotspot\DTO\MikrotikUserResult;
+use App\Domain\Hotspot\DTO\MikrotikProfileProvisionData;
 
 interface MikrotikApiInterface
 {
@@ -58,4 +59,9 @@ interface MikrotikApiInterface
      * Ping the Mikrotik router to check connectivity
      */
     public function ping(): bool;
+
+    public function createUserProfile(MikrotikProfileProvisionData $data): bool;
+    public function updateUserProfile(string $name, MikrotikProfileProvisionData $data): bool;
+    public function removeUserProfile(string $name): bool;
+    public function getUserProfiles(): array;
 }

@@ -25,6 +25,13 @@ class UserProfile extends Model
         'data_limit_mb',
         'description',
         'is_active',
+        'rate_limit',
+        'session_timeout',
+        'idle_timeout',
+        'keepalive_timeout',
+        'shared_users',
+        'synced_at',
+        'sync_error',
     ];
 
     /**
@@ -34,11 +41,13 @@ class UserProfile extends Model
      */
     protected function casts(): array
     {
-        return [
+         return [
             'price' => 'decimal:2',
             'validity_minutes' => 'integer',
             'data_limit_mb' => 'integer',
             'is_active' => 'boolean',
+            'shared_users' => 'integer',
+            'synced_at' => 'datetime',
         ];
     }
 
@@ -56,5 +65,10 @@ class UserProfile extends Model
     public function orders(): HasMany
     {
         return $this->hasMany(Order::class);
+    }
+
+    public function isSyncEligible(): bool
+    {
+        return $this->is_active === true;
     }
 }

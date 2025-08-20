@@ -15,6 +15,7 @@ class UserProfilesSeeder extends Seeder
     public function run(): void
     {
         $profiles = [
+            // Profils existants ...
             [
                 'name' => '2H',
                 'validity_minutes' => 120,
@@ -23,24 +24,55 @@ class UserProfilesSeeder extends Seeder
                 'description' => '2 hours internet access package',
                 'is_active' => true,
                 'mikrotik_profile' => null,
+                'rate_limit' => '2M/2M',
+                'shared_users' => 1,
+            ],
+            // ...
+
+            // Nouveaux bundles DATA (quota interne)
+            [
+                'name' => 'DATA_100MB',
+                'validity_minutes' => 1440, // 1 jour (adapter si besoin)
+                'price' => 0.80,
+                'data_limit_mb' => 100,
+                'description' => '100MB data bundle',
+                'is_active' => true,
+                'mikrotik_profile' => null,
+                'rate_limit' => '2M/2M',
+                'shared_users' => 1,
             ],
             [
-                'name' => '1DAY',
+                'name' => 'DATA_1GB',
                 'validity_minutes' => 1440,
-                'price' => 3.00,
-                'data_limit_mb' => null,
-                'description' => '1 day internet access package',
+                'price' => 3.50,
+                'data_limit_mb' => 1024,
+                'description' => '1GB data bundle',
                 'is_active' => true,
                 'mikrotik_profile' => null,
+                'rate_limit' => '5M/5M',
+                'shared_users' => 1,
             ],
             [
-                'name' => '1WEEK',
-                'validity_minutes' => 10080,
+                'name' => 'DATA_5GB',
+                'validity_minutes' => 7 * 1440, // 1 semaine
                 'price' => 12.00,
-                'data_limit_mb' => null,
-                'description' => '1 week internet access package',
+                'data_limit_mb' => 5120,
+                'description' => '5GB data bundle',
                 'is_active' => true,
                 'mikrotik_profile' => null,
+                'rate_limit' => '10M/10M',
+                'shared_users' => 1,
+            ],
+            [
+                'name' => 'DATA_10GB',
+                'validity_minutes' => 30 * 1440, // 30 jours
+                'price' => 20.00,
+                'data_limit_mb' => 10240,
+                'description' => '10GB data bundle',
+                'is_active' => true,
+                'mikrotik_profile' => null,
+                'rate_limit' => '15M/15M',
+                'shared_users' => 1,
             ],
         ];
 

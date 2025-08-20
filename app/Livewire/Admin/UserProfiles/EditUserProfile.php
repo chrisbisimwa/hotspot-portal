@@ -19,20 +19,33 @@ class EditUserProfile extends Component
     public ?int $data_limit_mb;
     public ?string $description;
     public bool $is_active;
+    public ?string $rate_limit;
+    public ?string $session_timeout;
+    public ?string $idle_timeout;
+    public ?string $keepalive_timeout;
+    public ?int $shared_users;
 
     protected function rules(): array
     {
-        return [
+         return [
             'name'             => [
                 'required','string','max:100',
                 Rule::unique('user_profiles','name')->ignore($this->userProfile->id),
             ],
-            'mikrotik_profile' => ['nullable','string','max:100'],
+            'mikrotik_profile' => [
+                'nullable','string','max:100',
+                Rule::unique('user_profiles','mikrotik_profile')->ignore($this->userProfile->id),
+            ],
             'price'            => ['required','numeric','min:0'],
             'validity_minutes' => ['required','integer','min:1'],
             'data_limit_mb'    => ['nullable','integer','min:1'],
             'description'      => ['nullable','string','max:500'],
             'is_active'        => ['boolean'],
+            'rate_limit'       => ['nullable','string','max:100'],
+            'session_timeout'  => ['nullable','string','max:50'],
+            'idle_timeout'     => ['nullable','string','max:50'],
+            'keepalive_timeout'=> ['nullable','string','max:50'],
+            'shared_users'     => ['nullable','integer','min:1','max:100'],
         ];
     }
 
@@ -42,13 +55,11 @@ class EditUserProfile extends Component
 
         $this->userProfile = $userProfile;
 
-        $this->name = $userProfile->name;
-        $this->mikrotik_profile = $userProfile->mikrotik_profile;
-        $this->price = (float) $userProfile->price;
-        $this->validity_minutes = $userProfile->validity_minutes;
-        $this->data_limit_mb = $userProfile->data_limit_mb;
-        $this->description = $userProfile->description;
-        $this->is_active = (bool) $userProfile->is_active;
+       $this->fill($userProfile->only([
+            'name','mikrotik_profile','price','validity_minutes','data_limit_mb',
+            'description','is_active','rate_limit','session_timeout','idle_timeout',
+            'keepalive_timeout','shared_users'
+        ]));
     }
 
     public function save(): void

@@ -12,6 +12,7 @@ use EvilFreelancer\RouterOSAPI\Client;
 use EvilFreelancer\RouterOSAPI\Config;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use App\Domain\Hotspot\DTO\MikrotikProfileProvisionData;
 
 class MikrotikApiService implements MikrotikApiInterface
 {
@@ -396,5 +397,102 @@ class MikrotikApiService implements MikrotikApiInterface
     {
         // TODO: Add proper connection cleanup if needed by the RouterOS API client
         $this->client = null;
+    }
+
+
+     public function createUserProfile(MikrotikProfileProvisionData $data): bool
+    {
+        try {
+            if ($this->isFakeMode()) {
+                Log::info('Mikrotik (fake): create profile', ['name' => $data->name]);
+                return true;
+            }
+            $this->ensureConnected();
+            $this->client->query('/ip/hotspot/user/profile/add', $data->toPayload());
+            Log::info('Mikrotik: profile created', ['name' => $data->name]);
+            return true;
+        } catch (\Throwable $e) {
+            Log::error('Mikrotik: create profile failed', [
+                'name' => $data->name,
+                'error' => $e->getMessage()
+            ]);
+            throw new MikrotikApiException('Create profile failed: '.$e->getMessage());
+        }
+    }
+
+    public function updateUserProfile(string $name, MikrotikProfileProvisionData $data): bool
+    {
+        try {
+            if ($this->isFakeMode()) {
+                Log::info('Mikrotik (fake): update profile', ['name' => $name]);
+                return true;
+            }
+            $this->ensureConnected();
+            $profiles = $this->client->query('/ip/hotspot/user/profile/print', ['?name' => $name]);
+            if (empty($profiles)) {
+                Log::warning('Mikrotik: profile not found for update', ['name' => $name]);
+                // Option : créer si absent
+                $this->client->query('/ip/hotspot/user/profile/add', $data->toPayload());
+                return true;
+            }
+            $id = $profiles[0]['.id'];
+            $payload = $data->toPayload();
+            unset($payload['name']); // On ne renomme pas ici
+            if (count($payload) > 0) {
+                $payload['.id'] = $id;
+                $this->client->query('/ip/hotspot/user/profile/set', $payload);
+            }
+            Log::info('Mikrotik: profile updated', ['name' => $name]);
+            return true;
+        } catch (\Throwable $e) {
+            Log::error('Mikrotik: update profile failed', [
+                'name' => $name,
+                'error' => $e->getMessage()
+            ]);
+            throw new MikrotikApiException('Update profile failed: '.$e->getMessage());
+        }
+    }
+
+    public function removeUserProfile(string $name): bool
+    {
+        try {
+            if ($this->isFakeMode()) {
+                Log::info('Mikrotik (fake): remove profile', ['name' => $name]);
+                return true;
+            }
+            $this->ensureConnected();
+            $profiles = $this->client->query('/ip/hotspot/user/profile/print', ['?name' => $name]);
+            if (empty($profiles)) {
+                return false;
+            }
+            $this->client->query('/ip/hotspot/user/profile/remove', [
+                'numbers' => $profiles[0]['.id'],
+            ]);
+            Log::info('Mikrotik: profile removed', ['name' => $name]);
+            return true;
+        } catch (\Throwable $e) {
+            Log::error('Mikrotik: remove profile failed', [
+                'name' => $name,
+                'error' => $e->getMessage()
+            ]);
+            throw new MikrotikApiException('Remove profile failed: '.$e->getMessage());
+        }
+    }
+
+    public function getUserProfiles(): array
+    {
+        try {
+            if ($this->isFakeMode()) {
+                return [
+                    ['name' => 'BASIC', 'rate-limit' => '2M/2M', 'shared-users' => '1'],
+                    ['name' => 'PREMIUM', 'rate-limit' => '10M/10M', 'shared-users' => '1'],
+                ];
+            }
+            $this->ensureConnected();
+            return $this->client->query('/ip/hotspot/user/profile/print');
+        } catch (\Throwable $e) {
+            Log::error('Mikrotik: get profiles failed', ['error' => $e->getMessage()]);
+            throw new MikrotikApiException('Get profiles failed: '.$e->getMessage());
+        }
     }
 }

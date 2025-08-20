@@ -18,17 +18,27 @@ class CreateUserProfile extends Component
     public ?int $data_limit_mb = null;
     public ?string $description = null;
     public bool $is_active = true;
+    public ?string $rate_limit = null;
+    public ?string $session_timeout = null;
+    public ?string $idle_timeout = null;
+    public ?string $keepalive_timeout = null;
+    public ?int $shared_users = 1;
 
     protected function rules(): array
     {
-        return [
+         return [
             'name'             => ['required', 'string', 'max:100', 'unique:user_profiles,name'],
-            'mikrotik_profile' => ['nullable', 'string', 'max:100'],
+            'mikrotik_profile' => ['nullable', 'string', 'max:100', 'unique:user_profiles,mikrotik_profile'],
             'price'            => ['required', 'numeric', 'min:0'],
             'validity_minutes' => ['required', 'integer', 'min:1'],
             'data_limit_mb'    => ['nullable', 'integer', 'min:1'],
             'description'      => ['nullable', 'string', 'max:500'],
             'is_active'        => ['boolean'],
+            'rate_limit'       => ['nullable', 'string', 'max:100'],
+            'session_timeout'  => ['nullable', 'string', 'max:50'],
+            'idle_timeout'     => ['nullable', 'string', 'max:50'],
+            'keepalive_timeout'=> ['nullable', 'string', 'max:50'],
+            'shared_users'     => ['nullable', 'integer', 'min:1', 'max:100'],
         ];
     }
 
