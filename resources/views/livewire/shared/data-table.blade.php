@@ -113,6 +113,28 @@
 
                                     @break
 
+                                    @case('date_nullable')
+                                        @php($val = data_get($item, $column['field']))
+                                        {{ $val ? \Illuminate\Support\Carbon::parse($val)->format('Y-m-d H:i') : '—' }}
+                                        @break
+
+                                    @case('duration_computed')
+                                        @php($seconds = data_get($item, 'session_time', 0))
+                                        @php($h = floor($seconds / 3600))
+                                        @php($m = floor(($seconds % 3600) / 60))
+                                        @php($s = $seconds % 60)
+                                        @php($formatted = ($h > 0 ? $h.'h ' : '') . ($m > 0 ? $m.'m ' : '') . $s.'s')
+
+                                        {{ $formatted }}
+                                        @break
+
+                                    @case('data_mb')
+                                        {{ (int) data_get($item, $column['field']) }}
+                                        @break
+
+                                    @case('total_mb_computed')
+                                        {{ (int) data_get($item, 'total_mb', 0) }}
+                                        @break
                                     @default
                                         {{ data_get($item, $column['field'] ?? '', '-') ?? '-' }}
                                 @endswitch

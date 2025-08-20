@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
+use App\Http\Controllers\Admin\HotspotTicketController;
 
 // Home route - redirect to user dashboard placeholder
 Route::get('/', function () {
@@ -76,8 +77,14 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/user-profiles/{userProfile}', \App\Livewire\Admin\UserProfiles\ShowUserProfile::class)->name('user-profiles.show');
     Route::get('/user-profiles/{userProfile}/edit', \App\Livewire\Admin\UserProfiles\EditUserProfile::class)->name('user-profiles.edit');
 
-    
-    
+    Route::get('/hotspot-users', \App\Livewire\Admin\HotspotUsers\ListHotspotUsers::class)->name('hotspot-users.index');
+    Route::get('/hotspot-users/{hotspotUser}', \App\Livewire\Admin\HotspotUsers\ShowHotspotUser::class)->name('hotspot-users.show');
+    Route::get('/hotspot-users/{hotspotUser}/edit', \App\Livewire\Admin\HotspotUsers\EditHotspotUser::class)->name('hotspot-users.edit');
+    Route::get('{hotspotUser}/ticket.pdf', [HotspotTicketController::class, 'single'])->name('hotspot-users.ticket.pdf');
+    Route::get('tickets.pdf', [HotspotTicketController::class, 'batch'])->name('hotspot-users.tickets.pdf.batch');
+
+    Route::get('/hotspot-sessions', \App\Livewire\Admin\HotspotSessions\ListHotspotSessions::class)->name('hotspot-sessions.index');
+
 });
 
 // Authentication routes

@@ -52,13 +52,13 @@
                     </a>
                     <ul class="nav nav-treeview">
                         <li class="nav-item">
-                            <a href="{{ route('admin.user-profiles.index') }}" class="nav-link {{ request()->is('admin/profiles*') ? 'active' : '' }}">
+                            <a href="{{ route('admin.user-profiles.index') }}" class="nav-link {{ request()->is('admin/user-profiles*') ? 'active' : '' }}">
                                 <i class="far fa-circle nav-icon"></i>
                                 <p>Profils</p>
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a href="#" class="nav-link {{ request()->is('admin/users*') ? 'active' : '' }}">
+                            <a href="{{ route('admin.hotspot-users.index') }}" class="nav-link {{ request()->is('admin/hotspot-users*') ? 'active' : '' }}">
                                 <i class="far fa-circle nav-icon"></i>
                                 <p>Hotspot Utilisateurs</p>
                             </a>
@@ -77,7 +77,7 @@
                     </a>
                     <ul class="nav nav-treeview">
                         <li class="nav-item">
-                            <a href="#" class="nav-link {{ request()->is('admin/sessions*') ? 'active' : '' }}">
+                            <a href="{{ route('admin.hotspot-sessions.index') }}" class="nav-link {{ request()->is('admin/sessions*') ? 'active' : '' }}">
                                 <i class="far fa-circle nav-icon"></i>
                                 <p>Sessions</p>
                             </a>
