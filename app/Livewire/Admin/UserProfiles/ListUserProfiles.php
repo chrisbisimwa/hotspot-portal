@@ -20,6 +20,8 @@ class ListUserProfiles extends DataTable
         'statusFilter'  => ['except' => ''],
     ];
 
+    protected $listeners = ['user-profile-created' => '$refresh'];
+
     public function mount(
         array $columns = [],
         string $sortField = 'created_at',
@@ -36,7 +38,7 @@ class ListUserProfiles extends DataTable
             ['field' => 'price',            'label' => 'Price',   'sortable' => false],
             ['field' => 'validity_minutes', 'label' => 'Validity (min)', 'sortable' => true],
             ['field' => 'data_limit_mb',    'label' => 'Data Limit (MB)', 'sortable' => true],
-            ['field' => 'is_active',        'label' => 'Active',  'sortable' => true, 'type' => 'boolean'],
+            ['field' => 'is_active',        'label' => 'Active',   'sortable' => true, 'type' => 'inline_active'],
             ['field' => 'created_at',       'label' => 'Created', 'sortable' => true, 'type' => 'date'],
             ['type'  => 'actions',          'label' => 'Actions',  'sortable' => false, 'actions_view' => 'livewire.admin.user-profiles.partials.actions'],
         ];

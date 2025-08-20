@@ -11,7 +11,16 @@
                 <i class="fas fa-layer-group mr-1"></i>
                 All profiles
             </h3>
+            
             <div class="btn-toolbar mb-2 mb-sm-0">
+                <div class="btn-group mr-2">
+                    <button wire:click="exportCsv" class="btn btn-outline-info btn-sm">
+                        <i class="fas fa-file-csv"></i> CSV
+                    </button>
+                    <button wire:click="exportExcel" class="btn btn-outline-success btn-sm">
+                        <i class="fas fa-file-excel"></i> Excel
+                    </button>
+                </div>
                 <livewire:admin.user-profiles.create-user-profile :key="'create-up-component'"/>
             </div>
         </div>

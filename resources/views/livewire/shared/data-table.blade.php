@@ -25,12 +25,12 @@
         <div class="col-md-3"></div>
     </div>
 
-    <div wire:loading.flex class="d-flex justify-content-center align-items-center p-3">
+    {{-- <div wire:loading.flex class="d-flex justify-content-center align-items-center p-3">
         <div class="spinner-border spinner-border-sm text-primary" role="status">
             <span class="sr-only">Loading...</span>
         </div>
         <span class="ml-2">Loading...</span>
-    </div>
+    </div> --}}
 
     <div class="table-responsive">
         <table class="table table-bordered table-striped mb-2">
@@ -97,6 +97,14 @@
                                         <span class="badge badge-{{ data_get($item, $column['field']) ? 'success' : 'secondary' }}">
                                             {{ data_get($item, $column['field']) ? 'Yes' : 'No' }}
                                         </span>
+                                        @break
+
+                                     @case('inline_active')
+                                        <livewire:admin.user-profiles.inline-active-toggle
+                                            :profileId="$item->id"
+                                            :isActive="(bool) data_get($item, $column['field'])"
+                                            :key="'up-active-'.$item->id"
+                                        />
                                         @break
 
                                     @case('actions')

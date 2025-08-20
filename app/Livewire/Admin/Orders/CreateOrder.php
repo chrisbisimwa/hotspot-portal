@@ -48,8 +48,7 @@ class CreateOrder extends Component
         $this->profiles = [];
         if ($this->user_id) {
             $this->loadingProfiles = true;
-            $this->profiles = UserProfile::where('user_id', $this->user_id)
-                ->orderBy('name')
+            $this->profiles = UserProfile::orderBy('name')
                 ->get(['id', 'name'])
                 ->map(fn ($p) => ['id' => $p->id, 'label' => $p->name])
                 ->toArray();
