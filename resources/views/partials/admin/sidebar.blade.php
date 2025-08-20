@@ -108,7 +108,7 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a href="#" class="nav-link {{ request()->is('admin/payments*') ? 'active' : '' }}">
+                            <a href="{{ route('admin.payments.index') }}" class="nav-link {{ request()->is('admin/payments*') ? 'active' : '' }}">
                                 <i class="far fa-circle nav-icon"></i>
                                 <p>Paiements</p>
                             </a>
@@ -118,7 +118,7 @@
 
                 <!-- Notifications -->
                 <li class="nav-item">
-                    <a href="#" class="nav-link {{ request()->is('admin/notifications*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.notifications.index') }}" class="nav-link {{ request()->is('admin/notifications*') ? 'active' : '' }}">
                         <i class="nav-icon fas fa-bell"></i>
                         <p>Notifications</p>
                     </a>

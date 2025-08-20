@@ -48,7 +48,7 @@ class ListPayments extends DataTable
         'payment-reconciled' => '$refresh',
     ];
 
-    public function mount(): void
+    public function mount(...$params): void
     {
         abort_unless(auth()->user()?->hasRole('admin'), 403);
 

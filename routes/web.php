@@ -85,6 +85,14 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 
     Route::get('/hotspot-sessions', \App\Livewire\Admin\HotspotSessions\ListHotspotSessions::class)->name('hotspot-sessions.index');
 
+    Route::get('/payments', \App\Livewire\Admin\Payments\ListPayments::class)->name('payments.index');
+    Route::get('/payments/{payment}', \App\Livewire\Admin\Payments\ShowPayment::class)->name('payments.show');
+    Route::get('/payments/{payment}/edit', \App\Livewire\Admin\Payments\EditPayment::class)->name('payments.edit');
+
+    Route::get('/notifications', \App\Livewire\Admin\Notifications\ListNotifications::class)->name('notifications.index');
+    Route::get('/notifications/{notification}', \App\Livewire\Admin\Notifications\ShowNotification::class)->name('notifications.show');
+    Route::get('/notifications/{notification}/edit', \App\Livewire\Admin\Notifications\EditNotification::class)->name('notifications.edit');
+
 });
 
 // Authentication routes

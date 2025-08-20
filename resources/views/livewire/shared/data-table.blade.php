@@ -135,6 +135,39 @@
                                     @case('total_mb_computed')
                                         {{ (int) data_get($item, 'total_mb', 0) }}
                                         @break
+
+                                    @case('money')
+                                        {{ number_format((float) data_get($item, $column['field']), 2) }}
+                                        @break
+
+                                    @case('badge_provider')
+                                        @php($prov = data_get($item, $column['field']))
+                                        <span class="badge badge-info">{{ strtoupper($prov ?? '') }}</span>
+                                        @break
+
+                                    @case('status_payment')
+                                        @php($st = data_get($item, $column['field']))
+                                        @php($cls = match($st) {
+                                            'success' => 'success',
+                                            'failed' => 'danger',
+                                            'processing','initiated' => 'warning',
+                                            'refunded' => 'secondary',
+                                            'cancelled' => 'dark',
+                                            default => 'light'
+                                        })
+                                        <span class="badge badge-{{ $cls }}">{{ strtoupper($st ?? '') }}</span>
+                                        @break
+
+                                    @case('mono_trunc')
+                                        @php($val = data_get($item, $column['field']))
+                                        <span style="font-family:monospace;white-space:nowrap;max-width:120px;overflow:hidden;text-overflow:ellipsis;display:inline-block;">
+                                            {{ $val }}
+                                        </span>
+                                        @break
+                                        @case('date_nullable')
+                                            @php($val = data_get($item, $column['field']))
+                                            {{ $val ? \Illuminate\Support\Carbon::parse($val)->format('Y-m-d H:i') : '—' }}
+                                            @break
                                     @default
                                         {{ data_get($item, $column['field'] ?? '', '-') ?? '-' }}
                                 @endswitch
