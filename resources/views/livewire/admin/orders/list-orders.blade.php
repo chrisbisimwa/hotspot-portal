@@ -7,26 +7,27 @@
 
 <div>
     <div class="card">
-        <div class="card-header">
-            <h3 class="card-title">
+        <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
+            <h3 class="card-title mb-2 mb-sm-0">
                 <i class="fas fa-shopping-cart mr-1"></i>
                 All Orders
             </h3>
-            <div class="card-tools">
-                <a href="#" class="btn btn-primary btn-sm">
-                    <i class="fas fa-plus"></i> New Order
-                </a>
+            <div class="btn-toolbar mb-2 mb-sm-0">
+                <div class="btn-group mr-2">
+                    <button wire:click="exportCsv" class="btn btn-outline-info btn-sm">
+                        <i class="fas fa-file-csv"></i> CSV
+                    </button>
+                    <button wire:click="exportExcel" class="btn btn-outline-success btn-sm">
+                        <i class="fas fa-file-excel"></i> Excel
+                    </button>
+                </div>
+                <livewire:admin.orders.create-order :key="'create-order-component'"/>
             </div>
         </div>
         <div class="card-body">
-            <livewire:shared.data-table 
-                :columns="$columns"
-                sort-field="created_at"
-                sort-direction="desc"
-                search-placeholder="Search orders..."
-                :key="'admin-orders-table'"
-            >
-                <x-slot name="filters">
+
+            <div class="row mb-2">
+                <div class="col-md-3">
                     <select wire:model.live="statusFilter" class="form-control form-control-sm">
                         <option value="">All Statuses</option>
                         <option value="pending">Pending</option>
@@ -36,8 +37,14 @@
                         <option value="cancelled">Cancelled</option>
                         <option value="expired">Expired</option>
                     </select>
-                </x-slot>
-            </livewire:shared.data-table>
+                </div>
+            </div>
+
+            @include('livewire.shared.data-table', [
+                'data' => $data,
+                'columns' => $columns,
+                'searchPlaceholder' => $searchPlaceholder,
+            ])
         </div>
     </div>
 </div>

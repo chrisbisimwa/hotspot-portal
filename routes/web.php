@@ -67,7 +67,13 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     // Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
 
 
-    Route::get('/orders', \App\Livewire\Admin\Orders\ListOrders::class)->name('admin.orders');
+    Route::get('/orders', \App\Livewire\Admin\Orders\ListOrders::class)->name('orders');
+    /* Route::get('/orders/{order}', \App\Livewire\Admin\Orders\ShowOrder::class)->name('orders.show');
+    Route::get('/orders/{order}/edit', \App\Livewire\Admin\Orders\EditOrder::class)->name('orders.edit'); */
+    Route::get('/profiles', \App\Livewire\Admin\Profiles\ListProfiles::class)->name('profiles');
+
+    Route::get('/orders/trends', \App\Http\Controllers\Admin\OrderTrendsController::class)
+        ->name('orders.trends');
     
 });
 

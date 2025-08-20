@@ -43,7 +43,7 @@
                 <a href="#" class="dropdown-item">
                     <!-- Message Start -->
                     <div class="media">
-                        <img src="{{ asset('images/default-avatar.png') }}" alt="User Avatar" class="img-size-50 mr-3 img-circle">
+                        <img src="{{ asset('dist/img/AdminLTELogo.png') }}" alt="User Avatar" class="img-size-50 mr-3 img-circle">
                         <div class="media-body">
                             <h3 class="dropdown-item-title">
                                 System Alert
@@ -91,7 +91,7 @@
         <!-- User Account Menu -->
         <li class="nav-item dropdown">
             <a class="nav-link" data-toggle="dropdown" href="#">
-                <img src="{{ asset('images/default-avatar.png') }}" alt="User Avatar" class="img-size-32 img-circle mr-2">
+                <img src="{{ asset('dist/img/AdminLTELogo.png') }}" alt="User Avatar" class="img-size-32 img-circle mr-2">
                 {{ Auth::user()->name ?? 'Admin' }}
             </a>
             <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">

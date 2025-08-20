@@ -20,6 +20,8 @@ class Dashboard extends Component
     {
         // Check authorization
         abort_unless(auth()->user()->hasRole('admin'), 403, 'Unauthorized access to admin dashboard');
+
+        
     }
 
     public function getMetricsProperty(): array

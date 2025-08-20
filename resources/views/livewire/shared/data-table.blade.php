@@ -1,5 +1,4 @@
 <div wire:loading.class="opacity-50">
-    <!-- Search and filters -->
     <div class="row mb-3">
         <div class="col-md-6">
             <div class="input-group input-group-sm">
@@ -11,9 +10,7 @@
                     aria-label="{{ $searchPlaceholder }}"
                 >
                 <div class="input-group-append">
-                    <span class="input-group-text">
-                        <i class="fas fa-search"></i>
-                    </span>
+                    <span class="input-group-text"><i class="fas fa-search"></i></span>
                 </div>
             </div>
         </div>
@@ -25,13 +22,9 @@
                 <option value="50">50 per page</option>
             </select>
         </div>
-        <div class="col-md-3">
-            <!-- Custom filters slot -->
-            {{ $filters ?? '' }}
-        </div>
+        <div class="col-md-3"></div>
     </div>
 
-    <!-- Loading indicator -->
     <div wire:loading.flex class="d-flex justify-content-center align-items-center p-3">
         <div class="spinner-border spinner-border-sm text-primary" role="status">
             <span class="sr-only">Loading...</span>
@@ -39,23 +32,30 @@
         <span class="ml-2">Loading...</span>
     </div>
 
-    <!-- Data table -->
     <div class="table-responsive">
-        <table class="table table-bordered table-striped">
+        <table class="table table-bordered table-striped mb-2">
             <thead>
                 <tr>
                     @foreach($columns as $column)
-                        <th 
-                            @if($column['sortable'] ?? false)
-                                wire:click="sortBy('{{ $column['field'] }}')" 
-                                style="cursor: pointer;"
+                        @php
+                            $sortable = $column['sortable'] ?? false;
+                            $field = $column['field'] ?? null;
+                            $label = $column['label'] ?? ($field ?? '');
+                            $type = $column['type'] ?? null;
+                        @endphp
+                        <th
+                            @if($sortable && $field)
+                                wire:click="sortBy('{{ $field }}')"
+                                style="cursor:pointer"
                                 class="user-select-none"
                             @endif
                         >
-                            {{ $column['label'] }}
-                            @if($column['sortable'] ?? false)
-                                <i class="{{ $this->getSortIcon($column['field']) }}"></i>
-                            @endif
+                            <span class="d-inline-flex align-items-center">
+                                {{ $label }}
+                                @if($sortable && $field)
+                                    <i class="{{ $this->getSortIcon($field) }} ml-1"></i>
+                                @endif
+                            </span>
                         </th>
                     @endforeach
                 </tr>
@@ -64,26 +64,38 @@
                 @forelse($data as $item)
                     <tr>
                         @foreach($columns as $column)
+                            @php($type = $column['type'] ?? null)
                             <td>
-                                @if($column['type'] === 'slot')
-                                    {{ $slot }}
-                                @elseif($column['type'] === 'status')
-                                    <livewire:shared.status-badge 
-                                        :status="data_get($item, $column['field'])" 
-                                        :domain="$column['domain']" 
-                                        :key="'status-' . $item->id . '-' . $column['field']"
-                                    />
-                                @elseif($column['type'] === 'date')
-                                    {{ data_get($item, $column['field'])?->format($column['format'] ?? 'Y-m-d H:i') ?? '-' }}
-                                @elseif($column['type'] === 'currency')
-                                    ${{ number_format(data_get($item, $column['field'], 0), 2) }}
-                                @elseif($column['type'] === 'boolean')
-                                    <span class="badge badge-{{ data_get($item, $column['field']) ? 'success' : 'secondary' }}">
-                                        {{ data_get($item, $column['field']) ? 'Yes' : 'No' }}
-                                    </span>
-                                @else
-                                    {{ data_get($item, $column['field']) ?? '-' }}
-                                @endif
+                                @switch($type)
+                                    @case('status')
+                                        <livewire:shared.status-badge 
+                                            :status="data_get($item, $column['field'])" 
+                                            :domain="$column['domain'] ?? null" 
+                                            :key="'status-' . $item->id . '-' . $column['field']"
+                                        />
+                                        @break
+
+                                    @case('date')
+                                        {{ data_get($item, $column['field'])?->format($column['format'] ?? 'Y-m-d H:i') ?? '-' }}
+                                        @break
+
+                                    @case('currency')
+                                        ${{ number_format((float) data_get($item, $column['field'], 0), 2) }}
+                                        @break
+
+                                    @case('boolean')
+                                        <span class="badge badge-{{ data_get($item, $column['field']) ? 'success' : 'secondary' }}">
+                                            {{ data_get($item, $column['field']) ? 'Yes' : 'No' }}
+                                        </span>
+                                        @break
+
+                                    @case('actions')
+                                        @includeIf('livewire.admin.orders.partials.actions', ['order' => $item, 'item' => $item])
+                                        @break
+
+                                    @default
+                                        {{ data_get($item, $column['field'] ?? '', '-') ?? '-' }}
+                                @endswitch
                             </td>
                         @endforeach
                     </tr>
@@ -99,7 +111,6 @@
         </table>
     </div>
 
-    <!-- Pagination -->
     <div class="d-flex justify-content-between align-items-center">
         <div class="text-muted small">
             Showing {{ $data->firstItem() ?? 0 }} to {{ $data->lastItem() ?? 0 }} of {{ $data->total() }} results

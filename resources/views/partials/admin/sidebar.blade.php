@@ -1,7 +1,7 @@
 <aside class="main-sidebar sidebar-dark-primary elevation-4">
     <!-- Brand Logo -->
     <a href="{{ route('admin.dashboard') }}" class="brand-link">
-        <img src="{{ asset('images/logo.png') }}" alt="HotspotPortal Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
+        <img src="{{ asset('dist/img/AdminLTELogo.png') }}" alt="HotspotPortal Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
         <span class="brand-text font-weight-light">HotspotPortal</span>
     </a>
 
@@ -10,7 +10,7 @@
         <!-- Sidebar user panel (optional) -->
         <div class="user-panel mt-3 pb-3 mb-3 d-flex">
             <div class="image">
-                <img src="{{ asset('images/default-avatar.png') }}" class="img-circle elevation-2" alt="User Image">
+                <img src="{{ asset('dist/img/AdminLTELogo.png') }}" class="img-circle elevation-2" alt="User Image">
             </div>
             <div class="info">
                 <a href="#" class="d-block">{{ Auth::user()->name ?? 'Administrator' }}</a>
@@ -52,7 +52,7 @@
                     </a>
                     <ul class="nav nav-treeview">
                         <li class="nav-item">
-                            <a href="#" class="nav-link {{ request()->is('admin/profiles*') ? 'active' : '' }}">
+                            <a href="{{ route('admin.profiles') }}" class="nav-link {{ request()->is('admin/profiles*') ? 'active' : '' }}">
                                 <i class="far fa-circle nav-icon"></i>
                                 <p>Profils</p>
                             </a>
@@ -102,7 +102,7 @@
                     </a>
                     <ul class="nav nav-treeview">
                         <li class="nav-item">
-                            <a href="#" class="nav-link {{ request()->is('admin/orders*') ? 'active' : '' }}">
+                            <a href="{{ route('admin.orders') }}" class="nav-link {{ request()->is('admin/orders*') ? 'active' : '' }}">
                                 <i class="far fa-circle nav-icon"></i>
                                 <p>Commandes</p>
                             </a>

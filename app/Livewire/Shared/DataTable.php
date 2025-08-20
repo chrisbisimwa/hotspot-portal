@@ -8,8 +8,9 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
-class DataTable extends Component
+abstract class DataTable extends Component
 {
     use WithPagination;
 
@@ -24,23 +25,25 @@ class DataTable extends Component
     public string $searchPlaceholder = 'Search...';
 
     protected $queryString = [
-        'search' => ['except' => ''],
-        'sortField' => ['except' => 'id'],
+        'search'        => ['except' => ''],
+        'sortField'     => ['except' => 'id'],
         'sortDirection' => ['except' => 'desc'],
-        'perPage' => ['except' => 15],
+        'perPage'       => ['except' => 15],
     ];
 
     public function mount(
-        array $columns,
+        array $columns = [],
         string $sortField = 'id',
         string $sortDirection = 'desc',
         int $perPage = 15,
         string $searchPlaceholder = 'Search...'
     ): void {
-        $this->columns = $columns;
-        $this->sortField = $sortField;
-        $this->sortDirection = $sortDirection;
-        $this->perPage = $perPage;
+        if ($columns) {
+            $this->columns = $columns;
+        }
+        $this->sortField         = $sortField;
+        $this->sortDirection     = $sortDirection;
+        $this->perPage           = $perPage;
         $this->searchPlaceholder = $searchPlaceholder;
     }
 
@@ -62,54 +65,40 @@ class DataTable extends Component
             $this->sortField = $field;
             $this->sortDirection = 'asc';
         }
-
         $this->resetPage();
     }
 
-    /**
-     * This method should be overridden in parent components to provide the query
-     */
-    protected function getQuery(): Builder
-    {
-        throw new \Exception('getQuery() method must be implemented in the parent component');
-    }
+    
+
+    abstract protected function getQuery(): Builder;
 
     public function getData(): LengthAwarePaginator
     {
         $query = $this->getQuery();
 
-        // Apply search if provided
-        if (!empty($this->search)) {
+        if ($this->search !== '') {
             $this->applySearch($query);
         }
 
-        // Apply filters
         foreach ($this->filters as $filter => $value) {
-            if (!empty($value)) {
+            if ($value !== '' && $value !== null) {
                 $this->applyFilter($query, $filter, $value);
             }
         }
 
-        // Apply sorting
         $query->orderBy($this->sortField, $this->sortDirection);
 
         return $query->paginate($this->perPage);
     }
 
-    /**
-     * Apply search to the query - should be overridden in parent components
-     */
     protected function applySearch(Builder $query): void
     {
-        // Default implementation - should be overridden
+        // Override dans l'enfant
     }
 
-    /**
-     * Apply filter to the query - should be overridden in parent components
-     */
     protected function applyFilter(Builder $query, string $filter, $value): void
     {
-        // Default implementation - should be overridden
+        // Override dans l'enfant
     }
 
     public function getSortIcon(string $field): string
@@ -118,13 +107,71 @@ class DataTable extends Component
             return 'fas fa-sort text-muted';
         }
 
-        return $this->sortDirection === 'asc' 
-            ? 'fas fa-sort-up' 
+        return $this->sortDirection === 'asc'
+            ? 'fas fa-sort-up'
             : 'fas fa-sort-down';
+    }
+
+    public function exportCsv(): StreamedResponse
+    {
+        $filename = 'export_' . class_basename(static::class) . '_' . now()->format('Ymd_His') . '.csv';
+
+        return response()->streamDownload(function () {
+            $handle = fopen('php://output', 'w');
+
+            fputcsv($handle, array_map(
+                fn ($c) => $c['label'] ?? $c['field'] ?? 'col',
+                $this->columns
+            ));
+
+            $query = $this->getQuery();
+
+            if ($this->search !== '') {
+                $this->applySearch($query);
+            }
+            foreach ($this->filters as $filter => $value) {
+                if ($value !== '' && $value !== null) {
+                    $this->applyFilter($query, $filter, $value);
+                }
+            }
+            $query->orderBy($this->sortField, $this->sortDirection);
+
+            $query->chunk(500, function ($rows) use ($handle) {
+                foreach ($rows as $row) {
+                    $line = [];
+                    foreach ($this->columns as $col) {
+                        $type = $col['type'] ?? null;
+                        if ($type === 'actions' || $type === 'slot') {
+                            $line[] = '';
+                        } else {
+                            $line[] = data_get($row, $col['field'] ?? '') ?? '';
+                        }
+                    }
+                    fputcsv($handle, $line);
+                }
+            });
+
+            fclose($handle);
+        }, $filename, [
+            'Content-Type' => 'text/csv',
+        ]);
+    }
+
+    public function exportExcel(): StreamedResponse
+    {
+        // Placeholder : renvoie un CSV nommé .xlsx
+        $response = $this->exportCsv();
+        $disposition = $response->headers->get('Content-Disposition');
+        $response->headers->set(
+            'Content-Disposition',
+            preg_replace('/\.csv"/', '.xlsx"', $disposition ?? 'attachment; filename="export.xlsx"')
+        );
+        return $response;
     }
 
     public function render()
     {
+        // Laisser les enfants override s'ils veulent wrapper.
         return view('livewire.shared.data-table', [
             'data' => $this->getData(),
         ]);

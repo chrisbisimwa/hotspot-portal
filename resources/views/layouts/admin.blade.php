@@ -77,10 +77,10 @@
     <div class="wrapper">
         
         <!-- Preloader -->
-        <div class="preloader flex-column justify-content-center align-items-center">
+        {{-- <div class="preloader flex-column justify-content-center align-items-center">
             <img class="animation__shake" src="{{ asset('images/logo.png') }}" alt="HotspotPortal" height="60" width="60">
         </div>
-
+ --}}
         <!-- Navbar -->
         @include('partials.admin.navbar')
 
@@ -125,7 +125,7 @@
                         </div>
                     @endif
 
-                    @yield('content')
+                     {{ $slot }}
                 </div>
             </section>
             <!-- /.content -->
@@ -148,7 +148,12 @@
     
     <!-- Livewire Scripts -->
     @livewireScripts
-    
+    <script src="{{ asset('vendor/chartjs/chart.umd.js') }}"></script>
+
+    <script src="{{ asset('dist/plugins/jquery/jquery.min.js') }}"></script>
+    <script src="{{ asset('dist/plugins/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ asset('dist/plugins/jquery-ui/jquery-ui.min.js') }}"></script>
+    <script src="{{ asset('dist/js/adminlte.min.js') }}"></script>
     @stack('scripts')
 </body>
 </html>

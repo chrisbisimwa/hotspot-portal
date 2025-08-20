@@ -200,23 +200,45 @@
 
 @push('scripts')
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Placeholder for Chart.js initialization
-    console.log('Admin dashboard loaded - Chart.js integration ready');
-    
-    // TODO: Initialize Chart.js when real data endpoint is ready
-    // Example:
-    // const ctx = document.getElementById('ordersChart').getContext('2d');
-    // new Chart(ctx, {
-    //     type: 'line',
-    //     data: {
-    //         // Chart data from API
-    //     },
-    //     options: {
-    //         responsive: true,
-    //         maintainAspectRatio: false
-    //     }
-    // });
+document.addEventListener('DOMContentLoaded', () => {
+    const canvas = document.getElementById('ordersChart');
+    if (!canvas || typeof Chart === 'undefined') {
+        console.warn('Chart.js non chargé ou canvas introuvable');
+        return;
+    }
+
+    fetch(@json(route('admin.orders.trends')), {
+        headers: { 'Accept': 'application/json' }
+    })
+    .then(r => {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+    })
+    .then(payload => {
+        new Chart(canvas.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: payload.labels,
+                datasets: payload.datasets
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: { display: true },
+                    tooltip: { enabled: true }
+                },
+                scales: {
+                    x: { ticks: { autoSkip: true, maxTicksLimit: 7 } },
+                    y: { beginAtZero: true, precision: 0 }
+                }
+            }
+        });
+    })
+    .catch(e => {
+        console.error('Erreur chargement trend commandes', e);
+    });
 });
 </script>
 @endpush

@@ -16,7 +16,7 @@
             <li class="nav-header">MANAGEMENT</li>
             
             <li class="nav-item">
-                <a href="#" class="nav-link {{ request()->routeIs('admin.orders.*') ? 'active' : '' }}">
+                <a href="{{ route('admin.orders') }}" class="nav-link {{ request()->routeIs('admin.orders.*') ? 'active' : '' }}">
                     <i class="nav-icon fas fa-shopping-cart"></i>
                     <p>Orders</p>
                 </a>
