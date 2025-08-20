@@ -41,7 +41,7 @@ class ListOrders extends DataTable
             ['field' => 'total_amount',     'label' => 'Amount',  'sortable' => true, 'type' => 'currency'],
             ['field' => 'status',           'label' => 'Status',  'sortable' => true, 'type' => 'status', 'domain' => 'orders'],
             ['field' => 'created_at',       'label' => 'Created', 'sortable' => true, 'type' => 'date'],
-            ['type'  => 'actions',          'label' => 'Actions', 'sortable' => false],
+            ['type'  => 'actions',          'label' => 'Actions',  'sortable' => false, 'actions_view' => 'livewire.admin.orders.partials.actions'],
         ];
 
         parent::mount(

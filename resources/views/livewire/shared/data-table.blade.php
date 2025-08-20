@@ -82,7 +82,17 @@
                                     @case('currency')
                                         ${{ number_format((float) data_get($item, $column['field'], 0), 2) }}
                                         @break
+                                    @case('custom_validity')
+                                        @php($minutes = data_get($item, $column['field']))
+                                            {{ $minutes }} min (≈ {{ $minutes ? round($minutes/60,2) : 0 }} h)
+                                        @break
 
+                                    @case('custom_data')
+                                        @php($mb = data_get($item, $column['field']))
+                                            {{ $mb ? $mb.' MB' : 'Unlimited' }}
+                                        @break
+
+                                    
                                     @case('boolean')
                                         <span class="badge badge-{{ data_get($item, $column['field']) ? 'success' : 'secondary' }}">
                                             {{ data_get($item, $column['field']) ? 'Yes' : 'No' }}
@@ -90,8 +100,10 @@
                                         @break
 
                                     @case('actions')
-                                        @includeIf('livewire.admin.orders.partials.actions', ['order' => $item, 'item' => $item])
-                                        @break
+                                      @php($actionsView = $column['actions_view'] ?? null)
+                                      @includeIf($actionsView, ['item' => $item])
+
+                                    @break
 
                                     @default
                                         {{ data_get($item, $column['field'] ?? '', '-') ?? '-' }}

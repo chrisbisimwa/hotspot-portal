@@ -52,7 +52,7 @@
                     </a>
                     <ul class="nav nav-treeview">
                         <li class="nav-item">
-                            <a href="{{ route('admin.profiles') }}" class="nav-link {{ request()->is('admin/profiles*') ? 'active' : '' }}">
+                            <a href="{{ route('admin.user-profiles.index') }}" class="nav-link {{ request()->is('admin/profiles*') ? 'active' : '' }}">
                                 <i class="far fa-circle nav-icon"></i>
                                 <p>Profils</p>
                             </a>

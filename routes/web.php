@@ -68,12 +68,15 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 
 
     Route::get('/orders', \App\Livewire\Admin\Orders\ListOrders::class)->name('orders');
-    /* Route::get('/orders/{order}', \App\Livewire\Admin\Orders\ShowOrder::class)->name('orders.show');
-    Route::get('/orders/{order}/edit', \App\Livewire\Admin\Orders\EditOrder::class)->name('orders.edit'); */
-    Route::get('/profiles', \App\Livewire\Admin\Profiles\ListProfiles::class)->name('profiles');
+    Route::get('/orders/{order}', \App\Livewire\Admin\Orders\ShowOrder::class)->name('orders.show');
+    Route::get('/orders/{order}/edit', \App\Livewire\Admin\Orders\EditOrder::class)->name('orders.edit');
+    Route::get('/orders/trends', \App\Http\Controllers\Admin\OrderTrendsController::class)->name('orders.trends');
 
-    Route::get('/orders/trends', \App\Http\Controllers\Admin\OrderTrendsController::class)
-        ->name('orders.trends');
+    Route::get('/user-profiles', \App\Livewire\Admin\UserProfiles\ListUserProfiles::class)->name('user-profiles.index');
+    Route::get('/user-profiles/{userProfile}', \App\Livewire\Admin\UserProfiles\ShowUserProfile::class)->name('user-profiles.show');
+    Route::get('/user-profiles/{userProfile}/edit', \App\Livewire\Admin\UserProfiles\EditUserProfile::class)->name('user-profiles.edit');
+
+    
     
 });
 
