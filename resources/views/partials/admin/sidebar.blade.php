@@ -141,7 +141,7 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a href="#" class="nav-link {{ request()->is('admin/logs*') ? 'active' : '' }}">
+                            <a href="{{ route('admin.logs.index') }}" class="nav-link {{ request()->is('admin/logs*') ? 'active' : '' }}">
                                 <i class="far fa-circle nav-icon"></i>
                                 <p>Logs</p>
                             </a>

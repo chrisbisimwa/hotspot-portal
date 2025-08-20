@@ -97,6 +97,12 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/monitoring/data/timeseries', [\App\Http\Controllers\Admin\MonitoringDataController::class, 'timeseries'])->name('monitoring.timeseries');
     Route::get('/monitoring/data/interfaces', [\App\Http\Controllers\Admin\MonitoringDataController::class, 'interfaces'])->name('monitoring.interfaces');
 
+    Route::get('/logs', \App\Livewire\Admin\Logs\LogsViewer::class)->name('logs.index');
+    Route::get('/logs/export', \App\Http\Controllers\Admin\LogExportController::class)->name('logs.export');
+
+    Route::get('/settings', \App\Livewire\Admin\Settings\SettingsIndex::class)->name('settings.index');
+    Route::get('/settings/{group}', \App\Livewire\Admin\Settings\SettingsGroup::class)->name('settings.group');
+
 });
 
 // Authentication routes

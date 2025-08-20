@@ -60,5 +60,11 @@ class AuthServiceProvider extends ServiceProvider
         Gate::define('viewAdminMonitoring', function ($user) {
             return $user?->hasRole('admin');
         });
+
+         Gate::define('viewAdminLogs', function($user) {
+            return $user->hasRole('admin'); // adapter selon ton système de rôles
+        });
+
+        Gate::define('manageSettings', fn($user) => $user->hasRole('admin'));
     }
 }

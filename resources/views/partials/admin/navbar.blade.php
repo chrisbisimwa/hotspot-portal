@@ -19,7 +19,8 @@
             <div class="navbar-search-block">
                 <form class="form-inline">
                     <div class="input-group input-group-sm">
-                        <input class="form-control form-control-navbar" type="search" placeholder="Search" aria-label="Search">
+                        <input class="form-control form-control-navbar" type="search" placeholder="Search"
+                            aria-label="Search">
                         <div class="input-group-append">
                             <button class="btn btn-navbar" type="submit">
                                 <i class="fas fa-search"></i>
@@ -43,7 +44,8 @@
                 <a href="#" class="dropdown-item">
                     <!-- Message Start -->
                     <div class="media">
-                        <img src="{{ asset('dist/img/AdminLTELogo.png') }}" alt="User Avatar" class="img-size-50 mr-3 img-circle">
+                        <img src="{{ asset('dist/img/AdminLTELogo.png') }}" alt="User Avatar"
+                            class="img-size-50 mr-3 img-circle">
                         <div class="media-body">
                             <h3 class="dropdown-item-title">
                                 System Alert
@@ -87,11 +89,16 @@
                 <a href="#" class="dropdown-item dropdown-footer">See All Notifications</a>
             </div>
         </li>
+        <flux:navlist.item :href="route('admin.settings.index')" :current="request()->routeIs('admin.settings.*')"
+            wire:navigate>
+            {{ __('Settings') }}
+        </flux:navlist.item>
 
         <!-- User Account Menu -->
         <li class="nav-item dropdown">
             <a class="nav-link" data-toggle="dropdown" href="#">
-                <img src="{{ asset('dist/img/AdminLTELogo.png') }}" alt="User Avatar" class="img-size-32 img-circle mr-2">
+                <img src="{{ asset('dist/img/AdminLTELogo.png') }}" alt="User Avatar"
+                    class="img-size-32 img-circle mr-2">
                 {{ Auth::user()->name ?? 'Admin' }}
             </a>
             <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
@@ -105,7 +112,7 @@
                 </a>
                 <div class="dropdown-divider"></div>
                 <a href="{{ route('logout') }}" class="dropdown-item"
-                   onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                    onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                     <i class="fas fa-sign-out-alt mr-2"></i> Logout
                 </a>
                 <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
