@@ -23,7 +23,7 @@ class SettingsIndex extends Component
 
     public function render()
     {
-        return view('livewire.admin.settings.index')
-            ->layout('layouts.app', ['title' => 'Paramètres']);
+        return view('livewire.admin.settings.settings-index')
+            ->layout('layouts.admin', ['title' => 'Paramètres']);
     }
 }

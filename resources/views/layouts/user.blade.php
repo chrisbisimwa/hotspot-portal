@@ -8,7 +8,7 @@
 
     <title>@yield('page_title', 'Dashboard') - {{ config('app.name', 'HotspotPortal') }}</title>
 
-    <!-- Fonts -->
+     <!-- Fonts -->
     {{-- Google Fonts retiré (CSP stricte). Fonte locale/ou fallback système. --}}
     <link rel="stylesheet" href="{{ asset('fonts/source-sans-pro.css') }}">
     <!-- Font Awesome -->
@@ -190,7 +190,8 @@
                         </div>
                     @endif
 
-                    @yield('content')
+                    {{-- @yield('content') --}}
+                    {{ $slot }}
                 </div>
             </div>
             <!-- /.content -->
@@ -213,7 +214,12 @@
 
     <!-- Livewire Scripts -->
     @livewireScripts
+     <script src="{{ asset('vendor/chartjs/chart.umd.js') }}"></script>
 
+    <script src="{{ asset('dist/plugins/jquery/jquery.min.js') }}"></script>
+    <script src="{{ asset('dist/plugins/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ asset('dist/plugins/jquery-ui/jquery-ui.min.js') }}"></script>
+    <script src="{{ asset('dist/js/adminlte.min.js') }}"></script>
     @stack('scripts')
 </body>
 

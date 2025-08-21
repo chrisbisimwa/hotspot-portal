@@ -5,11 +5,8 @@ use Livewire\Volt\Volt;
 use App\Http\Controllers\Admin\HotspotTicketController;
 
 // Home route - redirect to user dashboard placeholder
-Route::get('/', function () {
-    // TODO: Redirect to user dashboard when implemented
-    return view('welcome'); // Temporary placeholder
-})->name('home');
 
+Route::redirect('/', 'dashboard')->name('home');
 // User dashboard (authenticated users)
 Route::get('dashboard', \App\Livewire\User\Dashboard::class)
     ->middleware(['auth', 'verified'])
@@ -55,17 +52,6 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/reports', \App\Livewire\Admin\Reports\ReportsIndex::class)->name('reports.index');
     Route::get('/reports/{reportKey}', \App\Livewire\Admin\Reports\ReportViewer::class)->name('reports.viewer');
     Route::get('/exports', \App\Livewire\Admin\Exports\ExportsList::class)->name('exports.index');
-
-    // TODO: Add other admin routes here
-    // Route::get('/profiles', [ProfileController::class, 'index'])->name('profiles.index');
-    // Route::get('/users', [HotspotUserController::class, 'index'])->name('users.index');
-    // Route::get('/sessions', [SessionController::class, 'index'])->name('sessions.index');
-    // Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
-    // Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
-    // Route::get('/monitoring', [MonitoringController::class, 'index'])->name('monitoring.index');
-    // Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
-    // Route::get('/logs', [LogController::class, 'index'])->name('logs.index');
-    // Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
 
 
     Route::get('/orders', \App\Livewire\Admin\Orders\ListOrders::class)->name('orders');
