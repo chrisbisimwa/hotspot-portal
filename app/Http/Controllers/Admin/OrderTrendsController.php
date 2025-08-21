@@ -5,42 +5,55 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
-use Carbon\Carbon;
-use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class OrderTrendsController extends Controller
 {
-    public function __invoke(): JsonResponse
+    public function __invoke(Request $request)
     {
-        $days = collect(range(6, 0))->map(fn($i) => Carbon::today()->subDays($i));
+        Log::info('OrderTrendsController invoked', [
+            'user_id' => optional($request->user())->id,
+            'path' => $request->path()
+        ]);
+
+        // Sécurité : si pas d'user ou pas rôle admin => renvoie 403 (pas 404)
+        if (!$request->user() || !$request->user()->hasRole('admin')) {
+            Log::warning('OrderTrendsController unauthorized', ['user_id'=>optional($request->user())->id]);
+            abort(403);
+        }
+
+        $days = (int) $request->query('days', 7);
+        $days = max(1, min(30, $days));
+        $start = Carbon::now()->subDays($days - 1)->startOfDay();
+
         $raw = Order::query()
-            ->where('created_at', '>=', Carbon::today()->subDays(6)->startOfDay())
-            ->selectRaw('DATE(created_at) as d, COUNT(*) as total')
+            ->select(DB::raw('DATE(created_at) as d'), DB::raw('COUNT(*) as c'))
+            ->where('created_at', '>=', $start)
             ->groupBy('d')
-            ->pluck('total', 'd');
+            ->orderBy('d')
+            ->get()
+            ->keyBy('d');
 
         $labels = [];
         $data = [];
-        foreach ($days as $day) {
-            $key = $day->toDateString();
-            $labels[] = $day->format('d M');
-            $data[] = (int)($raw[$key] ?? 0);
+        $cursor = $start->copy();
+        for ($i=0; $i<$days; $i++) {
+            $date = $cursor->toDateString();
+            $labels[] = $date;
+            $data[] = (int) ($raw[$date]->c ?? 0);
+            $cursor->addDay();
         }
 
         return response()->json([
             'labels' => $labels,
             'datasets' => [
-                [
-                    'label' => 'Commandes',
-                    'data' => $data,
-                    'fill' => false,
-                    'tension' => 0.25,
-                    'borderColor' => '#3c8dbc',
-                    'backgroundColor' => '#3c8dbc',
-                    'pointRadius' => 4,
-                    'pointHoverRadius' => 6,
-                ],
+                ['label' => 'Commandes', 'data' => $data]
             ],
+            'total' => array_sum($data),
+            'range_days' => $days,
         ]);
     }
 }
