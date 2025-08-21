@@ -102,7 +102,7 @@
                         <!-- Placeholder for now -->
                         <div class="d-flex align-items-center justify-content-center h-100 text-muted">
                             <div class="text-center">
-                                <i class="fas fa-chart-line fa-3x mb-3"></i>
+                                {{-- <i class="fas fa-chart-line fa-3x mb-3"></i> --}}
                                 <h5>Chart Placeholder</h5>
                                 <p>Orders chart will be implemented with Chart.js</p>
                             </div>
