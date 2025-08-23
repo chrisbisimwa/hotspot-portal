@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\MetricTimeseries;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Domain\Hotspot\Services\MikrotikMetricsService;
 
 class MonitoringDataController extends Controller
 {
@@ -76,6 +77,15 @@ class MonitoringDataController extends Controller
             'range' => $range,
             'since' => $since->toISOString(),
             'data' => $rows,
+        ]);
+    }
+
+    public function interfacesLive(MikrotikMetricsService $metrics): JsonResponse
+    {
+        return response()->json([
+            'success' => true,
+            'updated_at' => now()->toISOString(),
+            'data' => $metrics->getCachedInterfaces(autoRefresh: true),
         ]);
     }
 }

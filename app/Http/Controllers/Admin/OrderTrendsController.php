@@ -14,11 +14,11 @@ class OrderTrendsController extends Controller
 {
     public function __invoke(Request $request)
     {
-        Log::info('OrderTrendsController invoked', [
+        /* Log::info('OrderTrendsController invoked', [
             'user_id' => optional($request->user())->id,
             'path' => $request->path()
         ]);
-
+ */
         // Sécurité : si pas d'user ou pas rôle admin => renvoie 403 (pas 404)
         if (!$request->user() || !$request->user()->hasRole('admin')) {
             Log::warning('OrderTrendsController unauthorized', ['user_id'=>optional($request->user())->id]);

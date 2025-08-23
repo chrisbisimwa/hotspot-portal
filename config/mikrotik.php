@@ -11,4 +11,6 @@ return [
 
     // Activer la provisioning automatique des profils
     'provision_profiles' => env('MIKROTIK_PROVISION_PROFILES', true),
+    // Intervalle (en secondes) entre deux collectes delta (job auto ou endpoint)
+    'interfaces_poll_interval_seconds' => env('MIKROTIK_IF_POLL_INTERVAL', 10),
 ];
